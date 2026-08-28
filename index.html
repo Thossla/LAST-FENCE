@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#071019">
+  <meta name="description" content="LAST FENCE — playable 2D beta">
+  <title>LAST FENCE — Playable Beta</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="beta.css">
+</head>
+<body>
+  <canvas id="game" aria-label="LAST FENCE 2D arena"></canvas>
+  <div id="game-ui">
+    <div id="menu-screen" class="screen-panel">
+      <div class="brand-line"><span class="rune-mark"></span><span>RIFT-BORN SURVIVAL</span></div>
+      <h1>LAST<br><em>FENCE</em></h1>
+      <p class="pitch">Hold the line.<br>Claim the fallen.</p>
+      <button class="primary-button" data-action="play">PLAY BETA <span>→</span></button>
+      <button class="ghost-button" data-action="howto">HOW TO PLAY <span>?</span></button>
+      <button class="ghost-button" data-action="showcase">OPEN SHOWCASE <span>↗</span></button>
+      <div class="build-label">VERSION 0.2 • OFFLINE BETA</div>
+    </div>
+
+    <div id="howto-screen" class="modal-panel hidden">
+      <div class="modal-head"><span class="eyebrow">FIELD MANUAL</span><button class="close-button" data-action="back">×</button></div>
+      <h2>KEEP THE FENCE ALIVE</h2>
+      <p>Survive each incoming wave, recover salvage and bind Rift Souls to your army. The base falls when its HP reaches zero.</p>
+      <div class="control-list">
+        <div><b>WASD / ARROWS</b><span>Move</span></div>
+        <div><b>MOUSE + CLICK</b><span>Aim and fire</span></div>
+        <div><b>SPACE</b><span>Fire while moving</span></div>
+        <div><b>Q</b><span>Dash</span></div>
+        <div><b>E</b><span>Summon soul ally</span></div>
+        <div><b>ESC</b><span>Pause</span></div>
+      </div>
+      <button class="primary-button" data-action="play">START RUN <span>→</span></button>
+    </div>
+
+    <div id="pause-screen" class="modal-panel hidden">
+      <div class="eyebrow">RUN PAUSED</div><h2>THE RIFT IS WAITING</h2>
+      <button class="primary-button" data-action="resume">RESUME <span>→</span></button>
+      <button class="ghost-button" data-action="menu">MAIN MENU <span>↩</span></button>
+    </div>
+
+    <div id="gameover-screen" class="modal-panel hidden">
+      <div class="eyebrow red-text">FENCE BREACHED</div><h2 id="gameover-title">THE KEEP HAS FALLEN</h2>
+      <p id="gameover-copy">The last light goes out… for now.</p>
+      <button class="primary-button" data-action="restart">TRY AGAIN <span>↻</span></button>
+      <button class="ghost-button" data-action="menu">MAIN MENU <span>↩</span></button>
+    </div>
+
+    <div id="hud" class="hidden" aria-live="polite">
+      <div class="hud-top-left hud-card">
+        <div class="hud-label">HERO</div><div class="hud-value" id="hp-value">100 / 100</div><div class="meter"><i id="hp-meter"></i></div>
+        <div class="hud-label">BASE HP <strong id="base-value">100%</strong></div><div class="meter base-meter"><i id="base-meter"></i></div>
+      </div>
+      <div class="wave-card hud-card"><div class="wave-label">WAVE <b id="wave-value">1</b></div><div id="wave-state">INCOMING</div><small id="enemy-value">0 ENEMIES</small></div>
+      <div class="hud-top-right hud-card"><div><span>SOULS</span><b id="soul-value">0</b></div><div><span>SCRAP</span><b id="scrap-value">0</b></div><div><span>RIFT</span><b>18</b></div></div>
+      <div class="hud-bottom-left hud-card"><div class="weapon-name">ARC REAPER</div><div class="weapon-sub">ENERGY BLADE <span>READY</span></div><div class="ability-row"><div id="dash-icon" class="ability"><b>Q</b><span>➤</span></div><div id="summon-icon" class="ability violet-ability"><b>E</b><span>☠</span></div><div class="ability"><b>SPACE</b><span>⚡</span></div></div></div>
+      <div class="objective-card hud-card"><span class="orange-text">OBJECTIVE</span><b>PROTECT THE FENCE</b><small>Collect souls. Survive the wave.</small></div>
+      <button class="pause-button" data-action="pause" aria-label="Pause">Ⅱ</button>
+    </div>
+  </div>
+  <script src="beta.js"></script>
+</body>
+</html>
