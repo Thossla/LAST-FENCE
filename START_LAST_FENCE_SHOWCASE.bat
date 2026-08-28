@@ -1,2 +1,2 @@
 @echo off
-start "LAST FENCE Showcase" "%~dp0index.html"
+call "%~dp0PLAY_LAST_FENCE.bat"

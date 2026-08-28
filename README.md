@@ -1,6 +1,12 @@
 # LAST FENCE — playable 2D beta
 
-Open `index.html` directly, or double-click `START_LAST_FENCE_SHOWCASE.bat` on Windows.
+## Starten unter Windows
+
+Am einfachsten: Doppelklick auf `PLAY_LAST_FENCE.bat`.
+
+Alternativ funktioniert auch `START_LAST_FENCE_SHOWCASE.bat`. Falls Python installiert ist, startet der Launcher die Beta automatisch über eine lokale Spielseite; dadurch werden Browser-Dateisperren vermieden. Ohne Python wird `index.html` direkt geöffnet.
+
+Wichtig: Auf GitHub selbst zeigt ein Klick auf `index.html` nur den Quelltext. Zum Spielen muss die Datei nach dem Download lokal geöffnet werden.
 
 This is an offline browser beta with no build step and no external dependencies.
 

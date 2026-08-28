@@ -1,48 +1,36 @@
-LAST FENCE — DIREKT NUTZBARE SHOWCASE-VERSION
+LAST FENCE — DIREKT SPIELBARE 2D-BETA
 ================================================
 
 STARTEN
 -------
 Doppelklicke auf:
 
-START_LAST_FENCE_SHOWCASE.bat
+PLAY_LAST_FENCE.bat
 
-Alternativ kannst du index.html direkt im Browser öffnen.
+Alternativ kannst du START_LAST_FENCE_SHOWCASE.bat oder index.html öffnen.
 Es ist keine Installation und keine Internetverbindung notwendig.
 
 BEDIENUNG
 ---------
-Klicke die Menüpunkte mit der Maus an.
+Klicke im Menü auf PLAY BETA.
 
 Tastatur:
 
-1  Hauptmenü
-2  Character / Loadouts
-3  Inventory
-4  Enchant
-5  Arena
-6  Basis Level 1
-7  Basis Level 5
-8  Lootdrop-Zone
-9  Boss THE BREAKER
-0  Nekromanten-Armee
-ESC  Zurück zum Hauptmenü
+WASD / Pfeile       Bewegen
+Maus + Linksklick   Zielen und schießen
+Leertaste           Schießen
+Q                   Dash
+E                   Soul-Ally beschwören
+ESC                 Pause
 
 FUNKTIONEN
 ----------
-- animierte blockige Dungeon-Arena
-- Hauptmenü
-- fünf auswählbare Builds
-- Character- und Ausrüstungsdarstellung
-- Inventar mit Kategorien und Itemdetails
-- simuliertes Ausrüsten
-- simuliertes Verzaubern
-- Collection / Codex
-- Multiplayer-Lobby als Mockup
-- HUD, Basis-Ausbaustufen, Loot, Boss und Soul Army
+- spielbare blockige Dungeon-Arena
+- Gegnerwellen und Boss THE BREAKER
+- Schießen, Dash und Soul-Ally
+- Basis verteidigen, Loot sammeln und Wellen überleben
 
 HINWEIS
 -------
-Diese Offline-Version ist für die sofortige Präsentation gedacht.
-Sie ersetzt nicht das eigentliche Unreal-Engine-Projekt. Das UE5-Projekt
-befindet sich weiterhin separat im Ordner LAST_FENCE_Showcase.
+Auf GitHub öffnet ein Klick auf index.html nur den Quelltext. Lade das
+Repository als ZIP herunter, entpacke es und starte die BAT-Datei lokal.
