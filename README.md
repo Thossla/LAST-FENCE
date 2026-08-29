@@ -1,28 +1,23 @@
-# LAST FENCE — playable 2D beta
+# LAST FENCE — Browser Beta
 
-## Starten unter Windows
+Eine vollständig statische 2D-Browser-Beta. Es gibt keine Installation und keine Abhängigkeiten: `index.html` öffnen oder über GitHub Pages spielen.
 
-Am einfachsten: Doppelklick auf `PLAY_LAST_FENCE.bat`.
+## Der Zaun lebt
 
-Alternativ funktioniert auch `START_LAST_FENCE_SHOWCASE.bat`. Falls Python installiert ist, startet der Launcher die Beta automatisch über eine lokale Spielseite; dadurch werden Browser-Dateisperren vermieden. Ohne Python wird `index.html` direkt geöffnet.
+- Die Festung besteht aus 28 separaten Zaunsegmenten mit eigenen Strukturpunkten.
+- Jeder Gegner wählt ein Segment, belagert es und verursacht dort Schaden.
+- Erst nach der Zerstörung dieses Segments durchquert der Gegner die Bresche und kann die Festung angreifen.
+- Mit `R` repariert der Held ein nahes, beschädigtes Segment für 10 Schrott.
 
-Wichtig: Auf GitHub selbst zeigt ein Klick auf `index.html` nur den Quelltext. Zum Spielen muss die Datei nach dem Download lokal geöffnet werden.
+## Steuerung
 
-This is an offline browser beta with no build step and no external dependencies.
+- `WASD` oder Pfeiltasten: bewegen
+- Maus + Klick oder Leertaste: zielen und feuern
+- `Q`: Ausweichen
+- `R`: nächsten Zaun reparieren
 
-## Included gameplay loop
+## GitHub Pages
 
-- move the hero around the arena
-- aim and fire at incoming enemies
-- protect the central fence base
-- collect Rift Souls and salvage drops
-- summon a small soul army
-- survive escalating waves
-- fight the boss THE BREAKER
-- switch between loadouts and enchantments in the presentation menus
+Der Workflow in `.github/workflows/deploy-pages.yml` veröffentlicht jede Änderung auf `main`. In den Repository-Einstellungen unter **Pages** muss einmalig als Quelle **GitHub Actions** gewählt werden. Danach ist die Beta verfügbar unter:
 
-## Controls
-
-`WASD` / arrow keys move · mouse aims · left click or `Space` fires · `E` summons souls · `Q` uses the dash · `Esc` pauses.
-
-The number keys `1–0` still open the showcase scenes from the original visual prototype.
+`https://thossla.github.io/LAST-FENCE/`

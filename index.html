@@ -1,67 +1,61 @@
 <!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#071019">
-  <meta name="description" content="LAST FENCE — playable 2D beta">
-  <title>LAST FENCE — Playable Beta</title>
-  <link rel="icon" href="data:,">
-  <link rel="stylesheet" href="beta.css">
-</head>
-<body>
-  <canvas id="game" aria-label="LAST FENCE 2D arena"></canvas>
-  <div id="game-ui">
-    <div id="menu-screen" class="screen-panel">
-      <div class="brand-line"><span class="rune-mark"></span><span>RIFT-BORN SURVIVAL</span></div>
-      <h1>LAST<br><em>FENCE</em></h1>
-      <p class="pitch">Hold the line.<br>Claim the fallen.</p>
-      <button class="primary-button" data-action="play">PLAY BETA <span>→</span></button>
-      <button class="ghost-button" data-action="howto">HOW TO PLAY <span>?</span></button>
-      <button class="ghost-button" data-action="showcase">OPEN SHOWCASE <span>↗</span></button>
-      <div class="build-label">VERSION 0.2 • OFFLINE BETA</div>
-    </div>
+<html lang="de">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#08131b">
+    <meta name="description" content="LAST FENCE – spielbare Browser-Beta">
+    <title>LAST FENCE — Beta</title>
+    <link rel="stylesheet" href="beta.css">
+  </head>
+  <body>
+    <canvas id="game" aria-label="LAST FENCE Spielarena"></canvas>
 
-    <div id="howto-screen" class="modal-panel hidden">
-      <div class="modal-head"><span class="eyebrow">FIELD MANUAL</span><button class="close-button" data-action="back">×</button></div>
-      <h2>KEEP THE FENCE ALIVE</h2>
-      <p>Survive each incoming wave, recover salvage and bind Rift Souls to your army. The base falls when its HP reaches zero.</p>
-      <div class="control-list">
-        <div><b>WASD / ARROWS</b><span>Move</span></div>
-        <div><b>MOUSE + CLICK</b><span>Aim and fire</span></div>
-        <div><b>SPACE</b><span>Fire while moving</span></div>
-        <div><b>Q</b><span>Dash</span></div>
-        <div><b>E</b><span>Summon soul ally</span></div>
-        <div><b>ESC</b><span>Pause</span></div>
-      </div>
-      <button class="primary-button" data-action="play">START RUN <span>→</span></button>
-    </div>
+    <main id="ui">
+      <section id="start" class="panel start-panel">
+        <p class="kicker">RIFT-BORN SURVIVAL · BETA 0.3</p>
+        <h1>LAST <em>FENCE</em></h1>
+        <p class="intro">Halte die Linie. Die Horde kommt erst durch, wenn sie den Zaun niedergerissen hat.</p>
+        <button id="play" class="primary">BETA SPIELEN <span>→</span></button>
+        <button id="help" class="secondary">STEUERUNG</button>
+        <p class="hint">Für Desktop optimiert · keine Installation nötig</p>
+      </section>
 
-    <div id="pause-screen" class="modal-panel hidden">
-      <div class="eyebrow">RUN PAUSED</div><h2>THE RIFT IS WAITING</h2>
-      <button class="primary-button" data-action="resume">RESUME <span>→</span></button>
-      <button class="ghost-button" data-action="menu">MAIN MENU <span>↩</span></button>
-    </div>
+      <section id="instructions" class="panel modal hidden">
+        <button class="close" data-close aria-label="Schließen">×</button>
+        <p class="kicker">FELDHANDBUCH</p>
+        <h2>HALTE DEN ZAUN</h2>
+        <p>Jedes Zaunsegment besitzt eigene Strukturpunkte. Gegner belagern ein Segment, zerstören es und dringen erst dann durch diese Bresche ein.</p>
+        <dl>
+          <div><dt>WASD / PFEILE</dt><dd>Bewegen</dd></div>
+          <div><dt>MAUS + KLICK / LEERTASTE</dt><dd>Zielen und feuern</dd></div>
+          <div><dt>Q</dt><dd>Ausweichen</dd></div>
+          <div><dt>R</dt><dd>Nahen Zaun reparieren (10 Schrott)</dd></div>
+        </dl>
+        <button id="startFromHelp" class="primary">LINIE HALTEN <span>→</span></button>
+      </section>
 
-    <div id="gameover-screen" class="modal-panel hidden">
-      <div class="eyebrow red-text">FENCE BREACHED</div><h2 id="gameover-title">THE KEEP HAS FALLEN</h2>
-      <p id="gameover-copy">The last light goes out… for now.</p>
-      <button class="primary-button" data-action="restart">TRY AGAIN <span>↻</span></button>
-      <button class="ghost-button" data-action="menu">MAIN MENU <span>↩</span></button>
-    </div>
+      <section id="gameover" class="panel modal hidden">
+        <p class="kicker danger">FESTUNG GEFALLEN</p>
+        <h2>DER LETZTE ZAUN IST GEBROCHEN</h2>
+        <p id="summary"></p>
+        <button id="restart" class="primary">NOCH EINMAL <span>↻</span></button>
+        <button id="menu" class="secondary">ZUM MENÜ</button>
+      </section>
 
-    <div id="hud" class="hidden" aria-live="polite">
-      <div class="hud-top-left hud-card">
-        <div class="hud-label">HERO</div><div class="hud-value" id="hp-value">100 / 100</div><div class="meter"><i id="hp-meter"></i></div>
-        <div class="hud-label">BASE HP <strong id="base-value">100%</strong></div><div class="meter base-meter"><i id="base-meter"></i></div>
-      </div>
-      <div class="wave-card hud-card"><div class="wave-label">WAVE <b id="wave-value">1</b></div><div id="wave-state">INCOMING</div><small id="enemy-value">0 ENEMIES</small></div>
-      <div class="hud-top-right hud-card"><div><span>SOULS</span><b id="soul-value">0</b></div><div><span>SCRAP</span><b id="scrap-value">0</b></div><div><span>RIFT</span><b>18</b></div></div>
-      <div class="hud-bottom-left hud-card"><div class="weapon-name">ARC REAPER</div><div class="weapon-sub">ENERGY BLADE <span>READY</span></div><div class="ability-row"><div id="dash-icon" class="ability"><b>Q</b><span>➤</span></div><div id="summon-icon" class="ability violet-ability"><b>E</b><span>☠</span></div><div class="ability"><b>SPACE</b><span>⚡</span></div></div></div>
-      <div class="objective-card hud-card"><span class="orange-text">OBJECTIVE</span><b>PROTECT THE FENCE</b><small>Collect souls. Survive the wave.</small></div>
-      <button class="pause-button" data-action="pause" aria-label="Pause">Ⅱ</button>
-    </div>
-  </div>
-  <script src="beta.js"></script>
-</body>
+      <section id="hud" class="hidden" aria-live="polite">
+        <div class="card status-card">
+          <span>HELD</span><b id="heroHealth">100 / 100</b>
+          <div class="meter"><i id="heroMeter"></i></div>
+          <span>FESTUNG</span><b id="keepHealth">100%</b>
+          <div class="meter base"><i id="keepMeter"></i></div>
+        </div>
+        <div class="card wave-card"><span>WELLE <b id="wave">1</b></span><strong id="objective">BELAGERUNG BEGINNT</strong><small id="enemyCount">0 Gegner</small></div>
+        <div class="card resources"><span>SEELEN <b id="souls">0</b></span><span>SCHROTT <b id="scrap">0</b></span><small>R: Zaun reparieren</small></div>
+        <div class="card fence-card"><span>NÄCHSTER ZAUN</span><b id="fenceHealth">100 / 100</b><div class="meter fence"><i id="fenceMeter"></i></div><small id="fenceStatus">INTAKT</small></div>
+        <div id="toast"></div>
+      </section>
+    </main>
+    <script src="beta.js"></script>
+  </body>
 </html>
