@@ -6,19 +6,25 @@
     <meta name="theme-color" content="#08131b">
     <meta name="description" content="LAST FENCE – spielbare Browser-Beta">
     <title>LAST FENCE — Beta</title>
-    <link rel="stylesheet" href="beta.css?v=0.5.0">
+    <link rel="stylesheet" href="beta.css?v=0.6.0">
   </head>
   <body>
     <canvas id="game" aria-label="LAST FENCE Spielarena"></canvas>
 
     <main id="ui">
       <section id="start" class="panel start-panel">
-        <p class="kicker">RIFT-BORN SURVIVAL · BETA 0.3</p>
+        <p class="kicker">RIFT-BORN SURVIVAL · BETA 0.6</p>
         <h1>LAST <em>FENCE</em></h1>
-        <p class="intro">Halte die Linie. Die Horde kommt erst durch, wenn sie den Zaun niedergerissen hat.</p>
-        <button id="play" class="primary">BETA SPIELEN <span>→</span></button>
-        <button id="help" class="secondary">STEUERUNG</button>
-        <button id="loadout" class="secondary">CHARAKTER ANPASSEN</button>
+        <p class="intro">Halte die Linie. Erbeute Macht. Beschütze das Rift-Artefakt.</p>
+        <div class="main-menu-actions">
+          <button id="play" class="primary">PLAY <span>→</span></button>
+          <button id="loadout" class="secondary">CHARACTER</button>
+          <button id="inventory" class="secondary">INVENTORY</button>
+          <button class="secondary" data-showcase="ARMORY">ARMORY</button>
+          <button class="secondary" data-showcase="SOUL ARMY">SOULS</button>
+          <button class="secondary" data-showcase="MULTIPLAYER">MULTIPLAYER</button>
+          <button id="help" class="secondary">SETTINGS &amp; CONTROLS</button>
+        </div>
         <p class="hint">Für Desktop optimiert · keine Installation nötig</p>
       </section>
 
@@ -34,6 +40,7 @@
           <div><dt>Q</dt><dd>Ausweichen</dd></div>
           <div><dt>R</dt><dd>Nahen Zaun reparieren (10 Schrott)</dd></div>
           <div><dt>M</dt><dd>Arenakarte und Loot-Raritäten</dd></div>
+          <div><dt>I</dt><dd>Inventar und eingesammelte Beute</dd></div>
           <div><dt>C</dt><dd>Ausrüstung im Lauf anpassen</dd></div>
         </dl>
         <button id="startFromHelp" class="primary">LINIE HALTEN <span>→</span></button>
@@ -47,6 +54,26 @@
         <div id="loadout-grid" class="loadout-grid"></div>
         <p id="loadout-stats" class="loadout-stats"></p>
         <button id="loadout-back" class="primary">BEREIT <span>→</span></button>
+      </section>
+
+      <section id="inventory-screen" class="panel inventory-panel hidden">
+        <button class="close" id="close-inventory" aria-label="Schließen">×</button>
+        <p class="kicker">RIFT VAULT · GESAMMELTE BEUTE</p>
+        <h2>INVENTORY</h2>
+        <div id="inventory-tabs" class="inventory-tabs">
+          <button data-filter="ALL" class="active">ALL</button><button data-filter="WEAPONS">WEAPONS</button><button data-filter="ARMOR">ARMOR</button><button data-filter="ARTIFACTS">ARTIFACTS</button><button data-filter="MATERIALS">MATERIALS</button><button data-filter="SOULS">SOULS</button>
+        </div>
+        <div class="inventory-content"><div id="inventory-grid" class="inventory-grid"></div><aside id="inventory-detail" class="inventory-detail"></aside></div>
+        <button id="inventory-back" class="primary">ZURÜCK <span>←</span></button>
+      </section>
+
+      <section id="showcase-screen" class="panel modal hidden">
+        <button class="close" id="close-showcase" aria-label="Schließen">×</button>
+        <p class="kicker">LAST FENCE SHOWCASE</p>
+        <h2 id="showcase-title">ARMORY</h2>
+        <p id="showcase-copy"></p>
+        <div id="showcase-grid" class="showcase-grid"></div>
+        <button id="showcase-back" class="primary">ZURÜCK <span>←</span></button>
       </section>
 
       <section id="gameover" class="panel modal hidden">
@@ -67,11 +94,11 @@
           <div class="meter base"><i id="keepMeter"></i></div>
         </div>
         <div class="card wave-card"><span>WELLE <b id="wave">1</b></span><strong id="objective">BELAGERUNG BEGINNT</strong><small id="enemyCount">0 Gegner</small><div class="xp-line"><span>LVL <b id="levelValue">1</b></span><div class="meter xp"><i id="xpMeter"></i></div><small id="xpValue">0 / 100 XP</small></div></div>
-        <div class="card resources"><span>SEELEN <b id="souls">0</b></span><span>SCHROTT <b id="scrap">0</b></span><small>F: Mana-Waffe · M: Karte · C: Ausrüstung</small></div>
+        <div class="card resources"><span>SEELEN <b id="souls">0</b></span><span>SCHROTT <b id="scrap">0</b></span><small>F: Mana-Waffe · M: Karte · I: Inventar · C: Ausrüstung</small></div>
         <div class="card fence-card"><span>NÄCHSTER ZAUN</span><b id="fenceHealth">100 / 100</b><div class="meter fence"><i id="fenceMeter"></i></div><small id="fenceStatus">INTAKT</small></div>
         <div id="toast"></div>
       </section>
     </main>
-    <script src="beta.js?v=0.5.0"></script>
+    <script src="beta.js?v=0.6.0"></script>
   </body>
 </html>

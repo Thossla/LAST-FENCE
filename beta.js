@@ -7,7 +7,8 @@
     start: document.querySelector("#start"), help: document.querySelector("#instructions"), over: document.querySelector("#gameover"), hud: document.querySelector("#hud"),
     heroHealth: document.querySelector("#heroHealth"), heroMeter: document.querySelector("#heroMeter"), manaValue: document.querySelector("#manaValue"), manaMeter: document.querySelector("#manaMeter"), keepHealth: document.querySelector("#keepHealth"), keepMeter: document.querySelector("#keepMeter"),
     wave: document.querySelector("#wave"), objective: document.querySelector("#objective"), enemyCount: document.querySelector("#enemyCount"), souls: document.querySelector("#souls"), scrap: document.querySelector("#scrap"), levelValue: document.querySelector("#levelValue"), xpMeter: document.querySelector("#xpMeter"), xpValue: document.querySelector("#xpValue"),
-    fenceHealth: document.querySelector("#fenceHealth"), fenceMeter: document.querySelector("#fenceMeter"), fenceStatus: document.querySelector("#fenceStatus"), toast: document.querySelector("#toast"), summary: document.querySelector("#summary"), loadout: document.querySelector("#loadout-screen"), loadoutGrid: document.querySelector("#loadout-grid"), loadoutStats: document.querySelector("#loadout-stats")
+    fenceHealth: document.querySelector("#fenceHealth"), fenceMeter: document.querySelector("#fenceMeter"), fenceStatus: document.querySelector("#fenceStatus"), toast: document.querySelector("#toast"), summary: document.querySelector("#summary"), loadout: document.querySelector("#loadout-screen"), loadoutGrid: document.querySelector("#loadout-grid"), loadoutStats: document.querySelector("#loadout-stats"),
+    inventory: document.querySelector("#inventory-screen"), inventoryGrid: document.querySelector("#inventory-grid"), inventoryDetail: document.querySelector("#inventory-detail"), inventoryTabs: document.querySelector("#inventory-tabs"), showcase: document.querySelector("#showcase-screen"), showcaseTitle: document.querySelector("#showcase-title"), showcaseCopy: document.querySelector("#showcase-copy"), showcaseGrid: document.querySelector("#showcase-grid")
   };
 
   const palette = { ground: "#10251f", groundAlt: "#17332a", grid: "#4c7b67", wood: "#73401f", woodLight: "#b96f35", iron: "#839292", stone: "#344b47", dark: "#071219", green: "#79dca9", orange: "#f48a4c", red: "#ee5e59", blue: "#66beff", violet: "#b399ff", gold: "#f4ca72", white: "#eaf5ef" };
@@ -20,7 +21,8 @@
     mode: "menu", hero: null, enemies: [], bullets: [], particles: [], drops: [], fences: [],
     artifactHp: 250, artifactMaxHp: 250, artifactFlash: 0, scrap: 0, souls: 0, kills: 0, wave: 0, spawnLeft: 0, spawnTimer: 0, nextWaveTimer: 0,
     elapsed: 0, fireTimer: 0, manaFireTimer: 0, dashTimer: 0, toastTimer: 0, bannerTimer: 0, nextEnemy: 1, mapOpen: false, loadoutOpen: false,
-    level: 1, xp: 0, xpToLevel: 100, levelDamage: 0, camera: { x: 0, y: 0, ready: false }, equipment: { boots: 0, pants: 0, chest: 0, helmet: 0, artifact1: 0, artifact2: 0, artifact3: 0, weapon: 0, manaWeapon: 0 }
+    level: 1, xp: 0, xpToLevel: 100, levelDamage: 0, camera: { x: 0, y: 0, ready: false }, equipment: { boots: 0, pants: 0, chest: 0, helmet: 0, artifact1: 0, artifact2: 0, artifact3: 0, weapon: 0, manaWeapon: 0 },
+    inventory: [], inventoryFilter: "ALL", selectedInventory: 0, nextInventoryId: 1, inventoryOpen: false, showcaseOpen: false
   };
 
   const enemyKinds = {
@@ -34,13 +36,20 @@
     boots: { label: "SCHUHE", options: [{ name: "Wanderstiefel", bonus: "Geschwindigkeit +0" }, { name: "Rift-Läufer", bonus: "Tempo +24" }, { name: "Kriegsstiefel", bonus: "Leben +12" }] },
     pants: { label: "HOSE", options: [{ name: "Feldhose", bonus: "Keine Werte" }, { name: "Nebelgamaschen", bonus: "Mana +18" }, { name: "Bollwerk-Beinschutz", bonus: "Leben +20" }] },
     chest: { label: "BRUSTPLATTE", options: [{ name: "Jägerweste", bonus: "Leben +10" }, { name: "Arkane Platten", bonus: "Mana +25" }, { name: "Titanenpanzer", bonus: "Leben +38" }] },
-    helmet: { label: "HELM", options: [{ name: "Aufklärerhelm", bonus: "Keine Werte" }, { name: "Sehermaske", bonus: "Aim Assist +" }, { name: "Rift-Krone", bonus: "Schaden +7" }] },
-    artifact1: { label: "ARTEFAKT I", options: [{ name: "Leerer Sockel", bonus: "—" }, { name: "Sonnenkern", bonus: "Leben +18" }, { name: "Seelenlinse", bonus: "XP +20%" }] },
+    helmet: { label: "HELM", options: [{ name: "Aufklärerhelm", bonus: "Keine Werte" }, { name: "Warden's Helm", bonus: "Aim Assist +" }, { name: "Rift-Krone", bonus: "Schaden +7" }] },
+    artifact1: { label: "ARTEFAKT I", options: [{ name: "Leerer Sockel", bonus: "—" }, { name: "Sonnenkern", bonus: "Leben +18" }, { name: "Soul Core", bonus: "XP +20%" }] },
     artifact2: { label: "ARTEFAKT II", options: [{ name: "Leerer Sockel", bonus: "—" }, { name: "Mondsplitter", bonus: "Mana-Regen +3" }, { name: "Kriegsrune", bonus: "Schaden +5" }] },
     artifact3: { label: "ARTEFAKT III", options: [{ name: "Leerer Sockel", bonus: "—" }, { name: "Bollwerksamulett", bonus: "Artefakt-HP +50" }, { name: "Glücksmünze", bonus: "Loot +" }] },
     weapon: { label: "WAFFE", options: [{ name: "Arc Reaper", bonus: "Schaden 25" }, { name: "Sonnenklinge", bonus: "Schaden +9" }, { name: "Rift-Kanone", bonus: "Schaden +16" }] },
     manaWeapon: { label: "MANA-WAFFE", options: [{ name: "Blauer Stab", bonus: "F: 60 Schaden" }, { name: "Void-Katalysator", bonus: "F: 80 Schaden" }, { name: "Sturmfokus", bonus: "F: Kette +" }] }
   };
+
+  const supplyCaches = [
+    { x: 560, y: 510, rarity: "SELTEN", color: "#63aaff", label: "RARE SUPPLY DROP" },
+    { x: 810, y: 1770, rarity: "EPISCH", color: "#c48cff", label: "EPIC ARCANE DROP" },
+    { x: 2780, y: 1650, rarity: "LEGENDÄR", color: "#ffad46", label: "LEGENDARY DROP" },
+    { x: 2700, y: 500, rarity: "UNGEWÖHNLICH", color: "#71dc9e", label: "RIFT CACHE" }
+  ];
 
   function clamp(n, min, max) { return Math.max(min, Math.min(max, n)); }
   function distance(a, b) { return Math.hypot(a.x - b.x, a.y - b.y); }
@@ -55,7 +64,7 @@
 
   function stats() {
     const gear = state.equipment;
-    const health = (gear.boots === 2 ? 12 : 0) + (gear.pants === 2 ? 20 : 0) + (gear.chest === 2 ? 38 : 0) + (gear.artifact1 === 1 ? 18 : 0);
+    const health = (gear.boots === 2 ? 12 : 0) + (gear.pants === 2 ? 20 : 0) + (gear.chest === 0 ? 10 : gear.chest === 2 ? 38 : 0) + (gear.artifact1 === 1 ? 18 : 0);
     const mana = (gear.pants === 1 ? 18 : 0) + (gear.chest === 1 ? 25 : 0);
     const damage = state.levelDamage + (gear.helmet === 2 ? 7 : 0) + (gear.artifact2 === 2 ? 5 : 0) + [25, 34, 41][gear.weapon];
     return { maxHp: 100 + (state.level - 1) * 15 + health, maxMana: 60 + (state.level - 1) * 12 + mana, speed: 230 + (gear.boots === 1 ? 24 : 0), manaRegen: 8 + (gear.artifact2 === 1 ? 3 : 0), damage, manaDamage: [60, 80, 70][gear.manaWeapon], aimAssist: .16 + (gear.helmet === 1 ? .10 : 0), xpMultiplier: gear.artifact1 === 2 ? 1.2 : 1, lootLuck: gear.artifact3 === 2 ? .14 : 0, artifactMaxHp: 250 + (gear.artifact3 === 1 ? 50 : 0) };
@@ -79,8 +88,48 @@
     const value = stats(); ui.loadoutStats.textContent = `Leben ${value.maxHp} · Mana ${value.maxMana} · Schaden ${value.damage} · Mana-Regen ${value.manaRegen}/s · Artefakt ${value.artifactMaxHp} HP`;
   }
 
-  function openLoadout() { state.loadoutOpen = true; renderLoadout(); ui.loadout.classList.remove("hidden"); if (state.mode === "menu") ui.start.classList.add("hidden"); }
+  function openLoadout() { state.loadoutOpen = true; state.inventoryOpen = false; state.showcaseOpen = false; ui.inventory.classList.add("hidden"); ui.showcase.classList.add("hidden"); renderLoadout(); ui.loadout.classList.remove("hidden"); if (state.mode === "menu") ui.start.classList.add("hidden"); }
   function closeLoadout() { state.loadoutOpen = false; ui.loadout.classList.add("hidden"); if (state.mode === "menu") ui.start.classList.remove("hidden"); }
+
+  function rarityColor(rarity) { return ({ "GEWÖHNLICH": "#d9e2df", "UNGEWÖHNLICH": "#71dc9e", "SELTEN": "#63aaff", "EPISCH": "#c48cff", "LEGENDÄR": "#ffad46", "MYTHISCH": "#ff5dbb" })[rarity] || "#63aaff"; }
+
+  function addInventory(item) { state.inventory.push({ id: state.nextInventoryId++, color: rarityColor(item.rarity), ...item }); if (!state.selectedInventory) state.selectedInventory = state.inventory[state.inventory.length - 1].id; }
+
+  function seedInventory() {
+    state.inventory = []; state.nextInventoryId = 1; state.selectedInventory = 0;
+    [
+      { name: "Arc Reaper", rarity: "LEGENDÄR", category: "WEAPONS", description: "Energieschwert der letzten Wächter.", stats: "+25 Schaden · Aim Assist", equip: { slot: "weapon", index: 0 } },
+      { name: "Warden's Helm", rarity: "SELTEN", category: "ARMOR", description: "Helm mit Rift-Visor.", stats: "+Aim Assist", equip: { slot: "helmet", index: 1 } },
+      { name: "Soul Core", rarity: "EPISCH", category: "ARTIFACTS", description: "Verdichtet die Seelen des Gefallenen.", stats: "+20% XP", equip: { slot: "artifact1", index: 2 } },
+      { name: "Rift Crystal", rarity: "UNGEWÖHNLICH", category: "MATERIALS", description: "Magisches Upgrade-Material.", stats: "Verzauberungs-Material" },
+      { name: "Grunt Soul", rarity: "GEWÖHNLICH", category: "SOULS", description: "Eine gebundene Rifts Seele.", stats: "Beschwörbar" }
+    ].forEach(addInventory);
+  }
+
+  function renderInventory() {
+    const items = state.inventory.filter(item => state.inventoryFilter === "ALL" || item.category === state.inventoryFilter);
+    if (!items.some(item => item.id === state.selectedInventory)) state.selectedInventory = items[0]?.id || 0;
+    ui.inventoryGrid.innerHTML = "";
+    if (!items.length) ui.inventoryGrid.innerHTML = "<p class=\"empty-inventory\">Keine Gegenstände in dieser Kategorie.</p>";
+    items.forEach(item => { const button = document.createElement("button"); button.className = `inventory-item${item.id === state.selectedInventory ? " selected" : ""}`; button.type = "button"; button.dataset.itemId = item.id; button.style.setProperty("--rarity", item.color); button.innerHTML = `<small>${item.rarity}</small><b>${item.name}</b><small>${item.category}</small>`; ui.inventoryGrid.appendChild(button); });
+    const selected = state.inventory.find(item => item.id === state.selectedInventory); if (!selected) { ui.inventoryDetail.innerHTML = "<p>Wähle einen Gegenstand aus.</p>"; return; }
+    const equipped = selected.equip && state.equipment[selected.equip.slot] === selected.equip.index;
+    const action = selected.equip ? `<button class=\"secondary inventory-equip\" type=\"button\" data-equip-slot=\"${selected.equip.slot}\" data-equip-index=\"${selected.equip.index}\">${equipped ? "AUSGERÜSTET" : "AUSRÜSTEN"}</button>` : `<p class=\"collection-note\">SAMMLUNGSGEGENSTAND</p>`;
+    ui.inventoryDetail.style.setProperty("--rarity", selected.color); ui.inventoryDetail.innerHTML = `<p class=\"rarity-label\">${selected.rarity}</p><h3>${selected.name}</h3><p>${selected.description}</p><p><b>WERTE</b><br>${selected.stats}</p>${action}`;
+  }
+
+  function openInventory() { state.inventoryOpen = true; state.loadoutOpen = false; state.showcaseOpen = false; ui.loadout.classList.add("hidden"); ui.showcase.classList.add("hidden"); renderInventory(); ui.inventory.classList.remove("hidden"); if (state.mode === "menu") ui.start.classList.add("hidden"); }
+  function closeInventory() { state.inventoryOpen = false; ui.inventory.classList.add("hidden"); if (state.mode === "menu") ui.start.classList.remove("hidden"); }
+
+  function openShowcase(name) {
+    const showcase = {
+      "ARMORY": { copy: "Waffen, Stäbe und Runen warten in der Rift-Schmiede.", cards: [["Arc Reaper", "LEGENDÄRES ENERGIESCHWERT"], ["Thunderbolt Rifle", "SELTENE FERNWAFFE"], ["Stormcaller Staff", "EPISCHER MANA-FOKUS"], ["Enchant Forge", "3 RUNEN WÄHLEN"]] },
+      "SOUL ARMY": { copy: "Gebundene Seelen kämpfen als Verteidiger des Rift-Artefakts.", cards: [["Soul Capacity", "35 / 50"], ["Grunt", "×10 · FOLLOW"], ["Rift Mage", "×3 · DEFEND"], ["The Breaker", "×1 · LEGENDÄR"]] },
+      "MULTIPLAYER": { copy: "Eine Showcase-Lobby für den späteren Online-Co-op-Modus.", cards: [["HOST GAME", "THE FORGOTTEN KEEP"], ["JOIN FRIEND", "FREUNDE EINLADEN"], ["PUBLIC LOBBY", "SURVIVAL · NORMAL"], ["SLOTS", "1 / 4 WÄCHTER"]] }
+    }[name];
+    state.showcaseOpen = true; state.loadoutOpen = false; state.inventoryOpen = false; ui.loadout.classList.add("hidden"); ui.inventory.classList.add("hidden"); ui.showcaseTitle.textContent = name; ui.showcaseCopy.textContent = showcase.copy; ui.showcaseGrid.innerHTML = showcase.cards.map(card => `<div class=\"showcase-card\"><b>${card[0]}</b><small>${card[1]}</small></div>`).join(""); ui.showcase.classList.remove("hidden"); if (state.mode === "menu") ui.start.classList.add("hidden");
+  }
+  function closeShowcase() { state.showcaseOpen = false; ui.showcase.classList.add("hidden"); if (state.mode === "menu") ui.start.classList.remove("hidden"); }
 
   function camera() {
     const zoom = clamp(Math.min(innerWidth / 1080, innerHeight / 720), .52, 1.02);
@@ -103,7 +152,7 @@
   }
 
   function reset() {
-    state.level = 1; state.xp = 0; state.xpToLevel = 100; state.levelDamage = 0; state.mapOpen = false; state.loadoutOpen = false;
+    state.level = 1; state.xp = 0; state.xpToLevel = 100; state.levelDamage = 0; state.mapOpen = false; state.loadoutOpen = false; state.inventoryOpen = false; state.showcaseOpen = false; seedInventory();
     const value = stats(); state.hero = { x: world.artifact.x, y: world.artifact.y + 105, hp: value.maxHp, maxHp: value.maxHp, mana: value.maxMana, maxMana: value.maxMana, angle: -Math.PI / 2, invulnerable: 0 };
     state.enemies.length = 0; state.bullets.length = 0; state.particles.length = 0; state.drops.length = 0;
     state.fences = makeFence(); state.artifactMaxHp = value.artifactMaxHp; state.artifactHp = state.artifactMaxHp; state.artifactFlash = 0; state.scrap = 12; state.souls = 0; state.kills = 0; state.wave = 0;
@@ -175,6 +224,11 @@
     }
   }
 
+  function spawnXpOrbs(enemy, config) {
+    const count = enemy.kind === "breaker" ? 8 : enemy.kind === "mauler" ? 3 : 2, total = enemy.kind === "breaker" ? 150 : Math.round(config.reward * 2.6);
+    for (let i = 0; i < count; i++) state.drops.push({ type: "xp", x: enemy.x + random(-24, 24), y: enemy.y + random(-24, 24), xp: Math.max(1, Math.round(total / count)), color: "#63aaff", rarity: "RIFT XP", name: "Rift Essence", bob: Math.random() * Math.PI * 2 });
+  }
+
   function rollLoot(enemy, config) {
     const luck = stats().lootLuck, roll = Math.random() + luck;
     let rarity = "GEWÖHNLICH", color = "#d9e2df", multiplier = 1;
@@ -183,8 +237,9 @@
     else if (roll > .65) { rarity = "SELTEN"; color = "#63aaff"; multiplier = 2.2; }
     else if (roll > .38) { rarity = "UNGEWÖHNLICH"; color = "#71dc9e"; multiplier = 1.45; }
     const names = { "GEWÖHNLICH": "Verlorener Schrott", "UNGEWÖHNLICH": "Runenfragment", "SELTEN": "Sternensplitter", "EPISCH": "Rift-Relikt", "LEGENDÄR": "Kern der Dämmerung" };
-    state.drops.push({ x: enemy.x, y: enemy.y, value: Math.round(config.reward * multiplier), xp: Math.round(config.reward * 1.7 * multiplier), rarity, color, name: names[rarity], bob: Math.random() * Math.PI * 2 });
-    if (enemy.kind === "breaker") state.drops.push({ x: enemy.x + 35, y: enemy.y - 22, value: 80, xp: 120, rarity: "LEGENDÄR", color: "#ffad46", name: "Herz des Brechers", bob: Math.random() * Math.PI * 2 });
+    const category = rarity === "LEGENDÄR" || rarity === "EPISCH" ? "ARTIFACTS" : rarity === "SELTEN" ? "WEAPONS" : "MATERIALS";
+    state.drops.push({ type: "loot", x: enemy.x, y: enemy.y, value: Math.round(config.reward * multiplier), rarity, color, name: names[rarity], category, description: `${rarity}e Beute aus der Rift-Belagerung.`, stats: `+${Math.round(config.reward * multiplier)} Schrott`, bob: Math.random() * Math.PI * 2 });
+    if (enemy.kind === "breaker") state.drops.push({ type: "loot", x: enemy.x + 35, y: enemy.y - 22, value: 80, rarity: "LEGENDÄR", color: "#ffad46", name: "Herz des Brechers", category: "ARTIFACTS", description: "Der lebende Kern eines besiegten Belagerungsgolems.", stats: "+80 Schrott · Boss-Artefakt", bob: Math.random() * Math.PI * 2 });
   }
 
   function reviveHero() {
@@ -295,7 +350,7 @@
       hit.hp -= bullet.damage; hit.hitFlash = .1; particle(bullet.x, bullet.y, palette.blue, 4, 55, .28); state.bullets.splice(i, 1);
       if (hit.hp <= 0) {
         const config = enemyKinds[hit.kind]; state.kills++; state.souls += hit.kind === "breaker" ? 8 : 1; particle(hit.x, hit.y, config.color, hit.kind === "breaker" ? 35 : 12, hit.kind === "breaker" ? 190 : 100, hit.kind === "breaker" ? 1.2 : .7);
-        rollLoot(hit, config); state.enemies.splice(state.enemies.indexOf(hit), 1);
+        rollLoot(hit, config); spawnXpOrbs(hit, config); state.enemies.splice(state.enemies.indexOf(hit), 1);
         if (hit.kind === "breaker") showToast("THE BREAKER IST GEFALLEN");
       }
     }
@@ -304,7 +359,11 @@
   function updateDrops(dt) {
     for (let i = state.drops.length - 1; i >= 0; i--) {
       const drop = state.drops[i]; drop.bob += dt * 4;
-      if (distance(drop, state.hero) < 46) { state.scrap += drop.value; gainXp(drop.xp); particle(drop.x, drop.y, drop.color, 14, 95, .55); showToast(`${drop.rarity}: ${drop.name} — +${drop.value} SCHROTT`); state.drops.splice(i, 1); }
+      if (distance(drop, state.hero) < 46) {
+        if (drop.type === "xp") { gainXp(drop.xp); particle(drop.x, drop.y, drop.color, 10, 80, .45); }
+        else { state.scrap += drop.value; addInventory(drop); particle(drop.x, drop.y, drop.color, 14, 95, .55); showToast(`${drop.rarity}: ${drop.name} — +${drop.value} SCHROTT`); }
+        state.drops.splice(i, 1);
+      }
     }
   }
 
@@ -338,7 +397,7 @@
 
   function update(dt) {
     if (state.toastTimer > 0) { state.toastTimer -= dt; if (state.toastTimer <= 0) ui.toast.classList.remove("toast-visible"); }
-    if (state.mode !== "playing" || state.mapOpen || state.loadoutOpen) return;
+    if (state.mode !== "playing" || state.mapOpen || state.loadoutOpen || state.inventoryOpen || state.showcaseOpen) return;
     state.elapsed += dt; state.bannerTimer = Math.max(0, state.bannerTimer - dt); updateHero(dt); updateCamera(dt); updateWave(dt); updateEnemies(dt); updateBullets(dt); updateDrops(dt); updateParticles(dt);
     if (state.artifactHp <= 0) { gameOver(); return; }
     if (state.hero.hp <= 0) reviveHero();
@@ -357,17 +416,23 @@
     ctx.restore();
     [[180,190,1],[280,870,.8],[1435,150,.9],[1510,880,1.15],[240,530,.65],[1450,550,.72],[3100,210,.9],[2860,570,1.1],[2400,1800,.82],[300,1900,1.2],[550,1600,.78],[2920,1900,.9],[2110,350,.85],[980,2050,1.05],[1820,2050,.72]].forEach(([x,y,s]) => drawTree(x,y,s,cam));
     [[340,330,.8],[1300,770,.7],[1320,280,1],[3000,430,1],[2550,1700,.9],[410,1700,1.1],[2200,500,.76],[980,1900,.8]].forEach(([x,y,s]) => drawRuin(x,y,s,cam));
+    supplyCaches.forEach(cache => drawSupplyCache(cache, cam));
   }
 
   function drawTree(x, y, size, cam) { rect(x - 10 * size, y + 12 * size, 20 * size, 54 * size, palette.wood, cam); circle(x, y, 57 * size, "#1e5138", cam); circle(x + 25 * size, y - 22 * size, 43 * size, "#17452f", cam); circle(x - 27 * size, y - 19 * size, 38 * size, "#245d3e", cam); }
   function drawRuin(x, y, size, cam) { rect(x, y, 90 * size, 25 * size, "#344541", cam); rect(x + 10 * size, y - 32 * size, 26 * size, 33 * size, "#3e524e", cam); rect(x + 55 * size, y - 55 * size, 25 * size, 55 * size, "#3e524e", cam); }
+  function drawSupplyCache(cache, cam) { const p = toScreen(cache.x, cache.y, cam), s = cam.zoom, pulse = .7 + Math.sin(state.elapsed * 2 + cache.x) * .2; ctx.save(); ctx.globalAlpha = .16; ctx.fillStyle = cache.color; ctx.fillRect(p.x - 13 * s, p.y - 130 * s, 26 * s, 132 * s); ctx.globalAlpha = 1; ctx.shadowBlur = 22 * s; ctx.shadowColor = cache.color; ctx.fillStyle = cache.color; ctx.fillRect(p.x - 29 * s, p.y - 22 * s, 58 * s, 44 * s); ctx.fillStyle = "#24282b"; ctx.fillRect(p.x - 23 * s, p.y - 16 * s, 46 * s, 31 * s); ctx.fillStyle = cache.color; ctx.fillRect(p.x - 4 * s, p.y - 20 * s, 8 * s, 40 * s); ctx.globalAlpha = pulse; ctx.beginPath(); ctx.arc(p.x, p.y - 7 * s, 43 * s, 0, Math.PI * 2); ctx.strokeStyle = cache.color; ctx.lineWidth = 2 * s; ctx.stroke(); ctx.restore(); }
 
   function drawKeep(cam) {
-    const keep = world.keep; rect(keep.x - 28, keep.y - 28, keep.w + 56, keep.h + 56, "#203a33", cam, "rgba(129, 214, 166, .3)"); rect(keep.x, keep.y, keep.w, keep.h, "#173028", cam);
+    const keep = world.keep; rect(keep.x - 34, keep.y - 34, keep.w + 68, keep.h + 68, "#27312d", cam, "rgba(194,157,85,.62)"); rect(keep.x, keep.y, keep.w, keep.h, "#1b2928", cam);
+    for (let x = keep.x + 18; x < keep.x + keep.w; x += 46) for (let y = keep.y + 18; y < keep.y + keep.h; y += 46) rect(x, y, 42, 42, (Math.floor(x / 46) + Math.floor(y / 46)) % 2 ? "#203431" : "#192d2c", cam);
     drawArtifact(cam);
-    const artifact = world.artifact; rect(artifact.x - 102, artifact.y + 78, 55, 14, palette.wood, cam); rect(artifact.x + 60, artifact.y + 84, 56, 14, palette.woodLight, cam);
+    const artifact = world.artifact; rect(artifact.x - 172, artifact.y + 120, 80, 18, palette.wood, cam); rect(artifact.x + 96, artifact.y + 120, 82, 18, palette.woodLight, cam); drawStation(keep.x + 130, keep.y + 128, "#b46cff", cam); drawStation(keep.x + keep.w - 180, keep.y + 135, "#4fa8ff", cam); drawTower(keep.x + 102, keep.y + keep.h - 118, cam); drawTower(keep.x + keep.w - 102, keep.y + keep.h - 118, cam); circle(artifact.x - 118, artifact.y + 22, 25, palette.orange, cam, .45); circle(artifact.x - 118, artifact.y + 15, 13, palette.gold, cam, .8);
     state.fences.forEach(fence => drawFence(fence, cam));
   }
+
+  function drawStation(x, y, color, cam) { rect(x - 35, y - 16, 70, 32, "#26363b", cam); rect(x - 22, y - 48, 44, 35, "#435058", cam); circle(x, y - 52, 16, color, cam, .58); }
+  function drawTower(x, y, cam) { rect(x - 16, y - 46, 32, 70, "#3d494e", cam); rect(x - 31, y - 56, 62, 15, "#697378", cam); circle(x, y - 64, 12, palette.blue, cam, .75); const p = toScreen(x, y - 64, cam); ctx.save(); ctx.strokeStyle = palette.blue; ctx.globalAlpha = .45; ctx.lineWidth = 2 * cam.zoom; ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p.x + 62 * cam.zoom, p.y - 22 * cam.zoom); ctx.stroke(); ctx.restore(); }
 
   function drawArtifact(cam) {
     const artifact = world.artifact, pulse = 1 + Math.sin(state.elapsed * 3.1) * .08, p = toScreen(artifact.x, artifact.y, cam), radius = 76 * cam.zoom * pulse;
@@ -409,21 +474,25 @@
   }
 
   function drawEffects(cam) {
-    state.drops.forEach(drop => { const p = toScreen(drop.x, drop.y - Math.sin(drop.bob) * 5, cam); ctx.save(); ctx.shadowBlur = 18; ctx.shadowColor = drop.color; ctx.fillStyle = drop.color; ctx.beginPath(); ctx.moveTo(p.x, p.y - 9 * cam.zoom); ctx.lineTo(p.x + 9 * cam.zoom, p.y); ctx.lineTo(p.x, p.y + 11 * cam.zoom); ctx.lineTo(p.x - 9 * cam.zoom, p.y); ctx.closePath(); ctx.fill(); ctx.restore(); });
+    state.drops.forEach(drop => { const p = toScreen(drop.x, drop.y - Math.sin(drop.bob) * 5, cam), size = drop.type === "xp" ? 6 : 10; ctx.save(); ctx.shadowBlur = drop.type === "xp" ? 14 : 24; ctx.shadowColor = drop.color; ctx.fillStyle = drop.color; ctx.beginPath(); ctx.moveTo(p.x, p.y - size * cam.zoom); ctx.lineTo(p.x + size * cam.zoom, p.y); ctx.lineTo(p.x, p.y + (size + 2) * cam.zoom); ctx.lineTo(p.x - size * cam.zoom, p.y); ctx.closePath(); ctx.fill(); if (drop.type === "loot" && (drop.rarity === "EPISCH" || drop.rarity === "LEGENDÄR")) { ctx.font = `800 ${Math.max(9, 10 * cam.zoom)}px Georgia`; ctx.textAlign = "center"; ctx.fillText(drop.rarity, p.x, p.y - 20 * cam.zoom); } ctx.restore(); });
     state.bullets.forEach(bullet => { const p = toScreen(bullet.x, bullet.y, cam), color = bullet.color || palette.blue; ctx.save(); ctx.strokeStyle = color; ctx.shadowBlur = bullet.mana ? 22 : 12; ctx.shadowColor = color; ctx.lineWidth = (bullet.mana ? 6 : 3) * cam.zoom; ctx.beginPath(); ctx.moveTo(p.x - bullet.vx * .012 * cam.zoom, p.y - bullet.vy * .012 * cam.zoom); ctx.lineTo(p.x, p.y); ctx.stroke(); ctx.restore(); });
     state.particles.forEach(item => { const p = toScreen(item.x, item.y, cam); ctx.save(); ctx.globalAlpha = item.life / item.maxLife; ctx.fillStyle = item.color; ctx.beginPath(); ctx.arc(p.x, p.y, item.size * cam.zoom, 0, Math.PI * 2); ctx.fill(); ctx.restore(); });
   }
 
   function drawArenaMap() {
-    const margin = 52, maxW = innerWidth - margin * 2, maxH = innerHeight - margin * 2, scale = Math.min(maxW / world.width, maxH / world.height), width = world.width * scale, height = world.height * scale, x = (innerWidth - width) / 2, y = (innerHeight - height) / 2;
+    const margin = 72, sideWidth = Math.min(250, innerWidth * .22), maxW = innerWidth - margin * 2 - sideWidth, maxH = innerHeight - margin * 2, scale = Math.min(maxW / world.width, maxH / world.height), width = world.width * scale, height = world.height * scale, x = (innerWidth - sideWidth - width) / 2, y = (innerHeight - height) / 2, panelX = x + width + 18;
     const point = item => ({ x: x + item.x * scale, y: y + item.y * scale });
-    ctx.save(); ctx.fillStyle = "rgba(3, 10, 14, .9)"; ctx.fillRect(0, 0, innerWidth, innerHeight); ctx.fillStyle = "#102922"; ctx.fillRect(x, y, width, height); ctx.strokeStyle = "#8be1b1"; ctx.lineWidth = 2; ctx.strokeRect(x, y, width, height);
-    const keep = world.keep; ctx.fillStyle = "rgba(93, 219, 157, .17)"; ctx.fillRect(x + keep.x * scale, y + keep.y * scale, keep.w * scale, keep.h * scale); ctx.strokeStyle = "rgba(164, 237, 194, .8)"; ctx.strokeRect(x + keep.x * scale, y + keep.y * scale, keep.w * scale, keep.h * scale);
+    ctx.save(); const shade = ctx.createRadialGradient(innerWidth * .5, innerHeight * .45, 0, innerWidth * .5, innerHeight * .45, innerWidth * .75); shade.addColorStop(0, "rgba(19,31,45,.98)"); shade.addColorStop(1, "rgba(2,6,10,.98)"); ctx.fillStyle = shade; ctx.fillRect(0, 0, innerWidth, innerHeight); ctx.fillStyle = "#0c1519"; ctx.fillRect(x - 10, y - 10, width + 20, height + 20); ctx.strokeStyle = "#c49a55"; ctx.lineWidth = 2; ctx.strokeRect(x - 10, y - 10, width + 20, height + 20); ctx.strokeStyle = "#3a6182"; ctx.lineWidth = 1; ctx.strokeRect(x - 5, y - 5, width + 10, height + 10);
+    const terrain = ctx.createLinearGradient(x, y, x + width, y + height); terrain.addColorStop(0, "#142134"); terrain.addColorStop(.48, "#26332b"); terrain.addColorStop(1, "#1e1729"); ctx.fillStyle = terrain; ctx.fillRect(x, y, width, height);
+    [[320,420,250,"#214936"],[520,1550,310,"#183e35"],[2750,400,330,"#26213e"],[2740,1690,300,"#4a2921"],[1080,1930,260,"#3c3321"]].forEach(([cx,cy,r,color]) => { const p = point({x:cx,y:cy}); ctx.fillStyle = color; ctx.globalAlpha = .45; ctx.beginPath(); ctx.arc(p.x,p.y,r*scale,0,Math.PI*2); ctx.fill(); }); ctx.globalAlpha = 1;
+    ctx.strokeStyle = "rgba(123,163,198,.18)"; ctx.lineWidth = 1; for (let gx = 0; gx < world.width; gx += 260) { const p = point({x:gx,y:0}); ctx.beginPath(); ctx.moveTo(p.x,y); ctx.lineTo(p.x,y+height); ctx.stroke(); } for (let gy = 0; gy < world.height; gy += 260) { const p = point({x:0,y:gy}); ctx.beginPath(); ctx.moveTo(x,p.y); ctx.lineTo(x+width,p.y); ctx.stroke(); }
+    const keep = world.keep; ctx.fillStyle = "rgba(100,191,162,.2)"; ctx.fillRect(x + keep.x * scale, y + keep.y * scale, keep.w * scale, keep.h * scale); ctx.strokeStyle = "#d3b272"; ctx.lineWidth = 2; ctx.strokeRect(x + keep.x * scale, y + keep.y * scale, keep.w * scale, keep.h * scale);
     state.fences.forEach(fence => { const p = point(fence); ctx.fillStyle = fence.breached ? palette.orange : "#b9814a"; ctx.fillRect(p.x - 2, p.y - 2, 4, 4); });
+    supplyCaches.forEach(cache => { const p = point(cache); ctx.save(); ctx.shadowBlur = 18; ctx.shadowColor = cache.color; ctx.fillStyle = cache.color; ctx.fillRect(p.x - 6, p.y - 6, 12, 12); ctx.globalAlpha = .35; ctx.fillRect(p.x - 2, p.y - 38, 4, 32); ctx.globalAlpha = 1; ctx.font = "800 10px Georgia"; ctx.fillText(cache.rarity, p.x + 10, p.y - 10); ctx.restore(); });
     state.enemies.forEach(enemy => { const p = point(enemy); ctx.fillStyle = enemy.kind === "breaker" ? palette.orange : palette.red; ctx.beginPath(); ctx.arc(p.x, p.y, enemy.kind === "breaker" ? 6 : 3, 0, Math.PI * 2); ctx.fill(); });
-    state.drops.forEach(drop => { const p = point(drop); ctx.fillStyle = drop.color; ctx.shadowBlur = 9; ctx.shadowColor = drop.color; ctx.beginPath(); ctx.arc(p.x, p.y, 5, 0, Math.PI * 2); ctx.fill(); ctx.shadowBlur = 0; ctx.fillStyle = drop.color; ctx.font = "700 10px system-ui"; ctx.fillText(drop.rarity, p.x + 8, p.y - 6); });
-    const artifact = point(world.artifact), hero = point(state.hero); ctx.fillStyle = palette.violet; ctx.beginPath(); ctx.arc(artifact.x, artifact.y, 8, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = palette.blue; ctx.beginPath(); ctx.arc(hero.x, hero.y, 6, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = palette.white; ctx.font = "900 18px system-ui"; ctx.fillText("ARENAKARTE", x, y - 17); ctx.font = "700 11px system-ui"; ctx.fillStyle = "#bbd7cb"; ctx.fillText("Blau: Held  ·  Violett: Rift-Artefakt  ·  Rot: Gegner  ·  Farbig: Loot-Rarität", x, y + height + 21); ctx.fillText("[M] Karte schließen", x + width - 120, y - 17); ctx.restore();
+    state.drops.forEach(drop => { const p = point(drop); ctx.fillStyle = drop.color; ctx.shadowBlur = 9; ctx.shadowColor = drop.color; ctx.beginPath(); ctx.arc(p.x, p.y, drop.type === "xp" ? 2 : 5, 0, Math.PI * 2); ctx.fill(); ctx.shadowBlur = 0; if (drop.type === "loot") { ctx.fillStyle = drop.color; ctx.font = "700 9px Georgia"; ctx.fillText(drop.rarity, p.x + 7, p.y - 5); } });
+    const artifact = point(world.artifact), hero = point(state.hero); ctx.shadowBlur = 16; ctx.shadowColor = palette.violet; ctx.fillStyle = palette.violet; ctx.beginPath(); ctx.arc(artifact.x, artifact.y, 8, 0, Math.PI * 2); ctx.fill(); ctx.shadowBlur = 12; ctx.shadowColor = palette.blue; ctx.fillStyle = palette.blue; ctx.beginPath(); ctx.arc(hero.x, hero.y, 6, 0, Math.PI * 2); ctx.fill(); ctx.shadowBlur = 0;
+    ctx.fillStyle = "#0b1015"; ctx.fillRect(panelX, y - 10, sideWidth - 12, height + 20); ctx.strokeStyle = "#856c45"; ctx.strokeRect(panelX, y - 10, sideWidth - 12, height + 20); ctx.fillStyle = "#e1c58c"; ctx.font = "900 18px Georgia"; ctx.fillText("ARENAKARTE", x, y - 24); ctx.font = "900 14px Georgia"; ctx.fillText("RIFT INTEL", panelX + 18, y + 28); const legend = [[palette.blue,"HELD"],[palette.violet,"RIFT-ARTEFAKT"],[palette.red,"HORDEN"],["#63aaff","SELTEN"],["#c48cff","EPISCH"],["#ffad46","LEGENDÄR"]]; legend.forEach(([color,label], index) => { const ly = y + 66 + index * 36; ctx.fillStyle = color; ctx.fillRect(panelX + 19, ly - 9, 13, 13); ctx.fillStyle = "#d9d0bd"; ctx.font = "700 11px Georgia"; ctx.fillText(label, panelX + 43, ly + 2); }); ctx.fillStyle = "#7696ae"; ctx.font = "700 10px system-ui"; ctx.fillText(`${state.enemies.length} SIGNALE ERKANNT`, panelX + 18, y + height - 58); ctx.fillText(`${state.drops.filter(drop => drop.type === "loot").length + supplyCaches.length} LOOT-SIGNALE`, panelX + 18, y + height - 38); ctx.fillStyle = "#d5b66d"; ctx.fillText("[M] SCHLIESSEN", panelX + 18, y + height - 16); ctx.restore();
   }
 
   function render() {
@@ -434,20 +503,26 @@
 
   function loop(time) { const dt = Math.min(.033, (time - previousTime) / 1000); previousTime = time; update(dt); render(); requestAnimationFrame(loop); }
   function resize() { const dpr = Math.min(2, devicePixelRatio || 1); canvas.width = Math.round(innerWidth * dpr); canvas.height = Math.round(innerHeight * dpr); canvas.style.width = `${innerWidth}px`; canvas.style.height = `${innerHeight}px`; ctx.setTransform(dpr, 0, 0, dpr, 0, 0); }
-  function play() { reset(); state.mode = "playing"; ui.start.classList.add("hidden"); ui.help.classList.add("hidden"); ui.over.classList.add("hidden"); ui.loadout.classList.add("hidden"); ui.hud.classList.remove("hidden"); previousTime = performance.now(); updateUi(); }
-  function menu() { state.mode = "menu"; state.mapOpen = false; closeLoadout(); ui.hud.classList.add("hidden"); ui.over.classList.add("hidden"); ui.help.classList.add("hidden"); ui.start.classList.remove("hidden"); }
+  function play() { reset(); state.mode = "playing"; ui.start.classList.add("hidden"); ui.help.classList.add("hidden"); ui.over.classList.add("hidden"); ui.loadout.classList.add("hidden"); ui.inventory.classList.add("hidden"); ui.showcase.classList.add("hidden"); ui.hud.classList.remove("hidden"); previousTime = performance.now(); updateUi(); }
+  function menu() { state.mode = "menu"; state.mapOpen = false; closeLoadout(); closeInventory(); closeShowcase(); ui.hud.classList.add("hidden"); ui.over.classList.add("hidden"); ui.help.classList.add("hidden"); ui.start.classList.remove("hidden"); }
 
   document.querySelector("#play").addEventListener("click", play); document.querySelector("#startFromHelp").addEventListener("click", play); document.querySelector("#restart").addEventListener("click", play); document.querySelector("#menu").addEventListener("click", menu);
   document.querySelector("#help").addEventListener("click", () => { ui.start.classList.add("hidden"); ui.help.classList.remove("hidden"); }); document.querySelector("[data-close]").addEventListener("click", () => { ui.help.classList.add("hidden"); ui.start.classList.remove("hidden"); });
   document.querySelector("#loadout").addEventListener("click", openLoadout); document.querySelector("#close-loadout").addEventListener("click", closeLoadout); document.querySelector("#loadout-back").addEventListener("click", closeLoadout);
   ui.loadoutGrid.addEventListener("click", event => { const button = event.target.closest("[data-slot]"); if (!button) return; const slot = button.dataset.slot, options = gearSlots[slot].options; state.equipment[slot] = (state.equipment[slot] + 1) % options.length; applyStats(); renderLoadout(); });
+  document.querySelector("#inventory").addEventListener("click", openInventory); document.querySelector("#close-inventory").addEventListener("click", closeInventory); document.querySelector("#inventory-back").addEventListener("click", closeInventory);
+  ui.inventoryTabs.addEventListener("click", event => { const button = event.target.closest("[data-filter]"); if (!button) return; state.inventoryFilter = button.dataset.filter; ui.inventoryTabs.querySelectorAll("button").forEach(tab => tab.classList.toggle("active", tab === button)); renderInventory(); });
+  ui.inventoryGrid.addEventListener("click", event => { const button = event.target.closest("[data-item-id]"); if (!button) return; state.selectedInventory = Number(button.dataset.itemId); renderInventory(); });
+  ui.inventoryDetail.addEventListener("click", event => { const button = event.target.closest("[data-equip-slot]"); if (!button) return; state.equipment[button.dataset.equipSlot] = Number(button.dataset.equipIndex); applyStats(); renderLoadout(); renderInventory(); showToast("GEGENSTAND AUSGERÜSTET"); });
+  document.querySelectorAll("[data-showcase]").forEach(button => button.addEventListener("click", () => openShowcase(button.dataset.showcase))); document.querySelector("#close-showcase").addEventListener("click", closeShowcase); document.querySelector("#showcase-back").addEventListener("click", closeShowcase);
   canvas.addEventListener("pointermove", event => { pointer.x = event.clientX; pointer.y = event.clientY; }); canvas.addEventListener("pointerdown", event => { pointer.down = true; pointer.x = event.clientX; pointer.y = event.clientY; }); window.addEventListener("pointerup", () => pointer.down = false);
   window.addEventListener("keydown", event => {
     keys[event.key] = true; if ([" ", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(event.key)) event.preventDefault(); if (event.repeat) return;
     const key = event.key.toLowerCase(); if (key === "q") dash(); if (key === "r") repairFence(); if (key === "f") fireManaWeapon();
-    if (key === "m" && state.mode === "playing" && !state.loadoutOpen) { state.mapOpen = !state.mapOpen; pointer.down = false; showToast(state.mapOpen ? "ARENAKARTE — LOOT-RARITÄTEN SICHTBAR" : "ARENAKARTE GESCHLOSSEN"); }
-    if (key === "c" && state.mode === "playing" && !state.mapOpen) { if (state.loadoutOpen) closeLoadout(); else openLoadout(); }
-    if (event.key === "Escape") { if (state.mapOpen) state.mapOpen = false; else if (state.loadoutOpen) closeLoadout(); }
+    if (key === "m" && state.mode === "playing" && !state.loadoutOpen && !state.inventoryOpen) { state.mapOpen = !state.mapOpen; pointer.down = false; showToast(state.mapOpen ? "ARENAKARTE — LOOT-RARITÄTEN SICHTBAR" : "ARENAKARTE GESCHLOSSEN"); }
+    if (key === "c" && state.mode === "playing" && !state.mapOpen && !state.inventoryOpen) { if (state.loadoutOpen) closeLoadout(); else openLoadout(); }
+    if (key === "i" && state.mode === "playing" && !state.mapOpen && !state.loadoutOpen) { if (state.inventoryOpen) closeInventory(); else openInventory(); }
+    if (event.key === "Escape") { if (state.mapOpen) state.mapOpen = false; else if (state.loadoutOpen) closeLoadout(); else if (state.inventoryOpen) closeInventory(); else if (state.showcaseOpen) closeShowcase(); }
   }); window.addEventListener("keyup", event => keys[event.key] = false); window.addEventListener("blur", () => pointer.down = false); window.addEventListener("resize", () => { resize(); updateCamera(0, true); });
-  resize(); renderLoadout(); updateCamera(0, true); requestAnimationFrame(loop);
+  seedInventory(); resize(); renderLoadout(); updateCamera(0, true); requestAnimationFrame(loop);
 })();
