@@ -4,6 +4,8 @@ Eine vollständig statische 2D-Browser-Beta. Es gibt keine Installation und kein
 
 ## Der Zaun lebt
 
+- In der Mitte der Festung steht ein Rift-Artefakt mit eigenen Strukturpunkten. Nur dessen Zerstörung beendet den Run.
+- Stirbt der Held, wird er am Rift-Artefakt mit voller Gesundheit wiederbelebt.
 - Die Festung besteht aus 28 separaten Zaunsegmenten mit eigenen Strukturpunkten.
 - Jeder Gegner wählt ein Segment, belagert es und verursacht dort Schaden.
 - Erst nach der Zerstörung dieses Segments durchquert der Gegner die Bresche und kann die Festung angreifen.

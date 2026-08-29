@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#08131b">
     <meta name="description" content="LAST FENCE – spielbare Browser-Beta">
     <title>LAST FENCE — Beta</title>
-    <link rel="stylesheet" href="beta.css?v=0.3.1">
+    <link rel="stylesheet" href="beta.css?v=0.4.0">
   </head>
   <body>
     <canvas id="game" aria-label="LAST FENCE Spielarena"></canvas>
@@ -25,7 +25,7 @@
         <button class="close" data-close aria-label="Schließen">×</button>
         <p class="kicker">FELDHANDBUCH</p>
         <h2>HALTE DEN ZAUN</h2>
-        <p>Jedes Zaunsegment besitzt eigene Strukturpunkte. Gegner belagern ein Segment, zerstören es und dringen erst dann durch diese Bresche ein.</p>
+        <p>Das Rift-Artefakt in der Mitte hält dich am Leben: Nach jedem Tod wirst du dort wiederbelebt. Game Over gibt es erst, wenn Gegner das Artefakt zerstören. Dafür müssen sie zuvor ein Zaunsegment niederreißen und durch die Bresche dringen.</p>
         <dl>
           <div><dt>WASD / PFEILE</dt><dd>Bewegen</dd></div>
           <div><dt>MAUS + KLICK / LEERTASTE</dt><dd>Zielen und feuern</dd></div>
@@ -36,8 +36,8 @@
       </section>
 
       <section id="gameover" class="panel modal hidden">
-        <p class="kicker danger">FESTUNG GEFALLEN</p>
-        <h2>DER LETZTE ZAUN IST GEBROCHEN</h2>
+        <p class="kicker danger">ARTEFAKT ZERSTÖRT</p>
+        <h2>DAS RIFT-ARTEFAKT IST ERLOSCHEN</h2>
         <p id="summary"></p>
         <button id="restart" class="primary">NOCH EINMAL <span>↻</span></button>
         <button id="menu" class="secondary">ZUM MENÜ</button>
@@ -47,7 +47,7 @@
         <div class="card status-card">
           <span>HELD</span><b id="heroHealth">100 / 100</b>
           <div class="meter"><i id="heroMeter"></i></div>
-          <span>FESTUNG</span><b id="keepHealth">100%</b>
+          <span>RIFT-ARTEFAKT</span><b id="keepHealth">250 / 250</b>
           <div class="meter base"><i id="keepMeter"></i></div>
         </div>
         <div class="card wave-card"><span>WELLE <b id="wave">1</b></span><strong id="objective">BELAGERUNG BEGINNT</strong><small id="enemyCount">0 Gegner</small></div>
@@ -56,6 +56,6 @@
         <div id="toast"></div>
       </section>
     </main>
-    <script src="beta.js?v=0.3.1"></script>
+    <script src="beta.js?v=0.4.0"></script>
   </body>
 </html>

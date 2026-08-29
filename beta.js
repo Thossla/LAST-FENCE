@@ -11,14 +11,14 @@
   };
 
   const palette = { ground: "#10251f", groundAlt: "#17332a", grid: "#4c7b67", wood: "#73401f", woodLight: "#b96f35", iron: "#839292", stone: "#344b47", dark: "#071219", green: "#79dca9", orange: "#f48a4c", red: "#ee5e59", blue: "#66beff", violet: "#b399ff", gold: "#f4ca72", white: "#eaf5ef" };
-  const world = { width: 1700, height: 1100, keep: { x: 510, y: 285, w: 680, h: 530 }, base: { x: 850, y: 550 } };
+  const world = { width: 1700, height: 1100, keep: { x: 510, y: 285, w: 680, h: 530 }, artifact: { x: 850, y: 550 } };
   const keys = Object.create(null);
   const pointer = { x: innerWidth / 2, y: innerHeight / 2, down: false };
   let previousTime = performance.now();
 
   const state = {
     mode: "menu", hero: null, enemies: [], bullets: [], particles: [], drops: [], fences: [],
-    baseHp: 100, scrap: 0, souls: 0, kills: 0, wave: 0, spawnLeft: 0, spawnTimer: 0, nextWaveTimer: 0,
+    artifactHp: 250, artifactMaxHp: 250, artifactFlash: 0, scrap: 0, souls: 0, kills: 0, wave: 0, spawnLeft: 0, spawnTimer: 0, nextWaveTimer: 0,
     elapsed: 0, fireTimer: 0, dashTimer: 0, toastTimer: 0, bannerTimer: 0, nextEnemy: 1
   };
 
@@ -42,7 +42,7 @@
   function camera() {
     const zoom = clamp(Math.min(innerWidth / 1080, innerHeight / 720), .52, 1.02);
     const viewW = innerWidth / zoom, viewH = innerHeight / zoom;
-    const focus = state.hero || world.base;
+    const focus = state.hero || world.artifact;
     return { zoom, x: clamp(focus.x - viewW / 2, 0, world.width - viewW), y: clamp(focus.y - viewH / 2, 0, world.height - viewH) };
   }
   function toScreen(x, y, cam) { return { x: (x - cam.x) * cam.zoom, y: (y - cam.y) * cam.zoom }; }
@@ -59,9 +59,9 @@
   }
 
   function reset() {
-    state.hero = { x: world.base.x, y: world.base.y + 155, hp: 100, maxHp: 100, angle: -Math.PI / 2, invulnerable: 0 };
+    state.hero = { x: world.artifact.x, y: world.artifact.y + 105, hp: 100, maxHp: 100, angle: -Math.PI / 2, invulnerable: 0 };
     state.enemies.length = 0; state.bullets.length = 0; state.particles.length = 0; state.drops.length = 0;
-    state.fences = makeFence(); state.baseHp = 100; state.scrap = 12; state.souls = 0; state.kills = 0; state.wave = 0;
+    state.fences = makeFence(); state.artifactHp = state.artifactMaxHp; state.artifactFlash = 0; state.scrap = 12; state.souls = 0; state.kills = 0; state.wave = 0;
     state.spawnLeft = 0; state.spawnTimer = 0; state.nextWaveTimer = 0; state.elapsed = 0; state.fireTimer = 0; state.dashTimer = 0; state.nextEnemy = 1;
     startWave();
   }
@@ -115,6 +115,17 @@
     const hero = state.hero;
     if (hero.invulnerable > 0) return;
     hero.hp = Math.max(0, hero.hp - damage); hero.invulnerable = .32; particle(source.x, source.y, palette.red, 8, 95, .45);
+  }
+
+  function damageArtifact(damage) {
+    state.artifactHp = Math.max(0, state.artifactHp - damage); state.artifactFlash = .18;
+    particle(world.artifact.x, world.artifact.y, palette.orange, 11, 105, .5);
+  }
+
+  function reviveHero() {
+    const hero = state.hero;
+    hero.x = world.artifact.x; hero.y = world.artifact.y + 105; hero.hp = hero.maxHp; hero.invulnerable = 1.5; hero.angle = -Math.PI / 2;
+    particle(world.artifact.x, world.artifact.y, palette.violet, 34, 165, 1.05); showToast("DAS RIFT-ARTEFAKT ERWECKT DICH WIEDER");
   }
 
   function move(entity, target, speed, dt) {
@@ -177,10 +188,10 @@
         if (move(enemy, target, config.speed * 1.08, dt) < 14) enemy.phase = "inside";
         continue;
       }
-      const baseDistance = move(enemy, world.base, config.speed, dt);
+      const artifactDistance = move(enemy, world.artifact, config.speed, dt);
       const heroDistance = distance(enemy, state.hero);
       if (heroDistance < config.radius + 26 && enemy.attackTimer <= 0) { damageHero(config.damage, enemy); enemy.attackTimer = config.attack; }
-      else if (baseDistance < config.radius + 35 && enemy.attackTimer <= 0) { state.baseHp = Math.max(0, state.baseHp - config.damage); enemy.attackTimer = config.attack; particle(world.base.x, world.base.y, palette.orange, 9, 90, .45); }
+      else if (artifactDistance < config.radius + 35 && enemy.attackTimer <= 0) { damageArtifact(config.damage); enemy.attackTimer = config.attack; }
     }
   }
 
@@ -209,7 +220,7 @@
 
   function updateParticles(dt) {
     for (let i = state.particles.length - 1; i >= 0; i--) { const p = state.particles[i]; p.x += p.vx * dt; p.y += p.vy * dt; p.vx *= .94; p.vy *= .94; p.life -= dt; if (p.life <= 0) state.particles.splice(i, 1); }
-    state.fences.forEach(fence => fence.flash = Math.max(0, fence.flash - dt));
+    state.fences.forEach(fence => fence.flash = Math.max(0, fence.flash - dt)); state.artifactFlash = Math.max(0, state.artifactFlash - dt);
   }
 
   function updateWave(dt) {
@@ -227,7 +238,7 @@
   function updateUi() {
     const fence = nearestFence(state.hero); const fencePercent = fence.hp / fence.maxHp * 100;
     ui.heroHealth.textContent = `${Math.ceil(state.hero.hp)} / ${state.hero.maxHp}`; ui.heroMeter.style.width = `${state.hero.hp}%`;
-    ui.keepHealth.textContent = `${Math.ceil(state.baseHp)}%`; ui.keepMeter.style.width = `${state.baseHp}%`;
+    ui.keepHealth.textContent = `${Math.ceil(state.artifactHp)} / ${state.artifactMaxHp}`; ui.keepMeter.style.width = `${state.artifactHp / state.artifactMaxHp * 100}%`;
     ui.wave.textContent = state.wave; ui.objective.textContent = state.spawnLeft ? "BELAGERUNG LÄUFT" : state.enemies.length ? "BRESCHEN VERTEIDIGEN" : "NÄCHSTE WELLE";
     ui.enemyCount.textContent = `${state.enemies.length + state.spawnLeft} Gegner`; ui.souls.textContent = state.souls; ui.scrap.textContent = state.scrap;
     ui.fenceHealth.textContent = `${Math.ceil(fence.hp)} / ${fence.maxHp}`; ui.fenceMeter.style.width = `${fencePercent}%`; ui.fenceStatus.textContent = fence.breached ? `BRESCHE — ${fence.side}` : `${fence.side}-ZAUN INTAKT`;
@@ -236,8 +247,10 @@
   function update(dt) {
     if (state.toastTimer > 0) { state.toastTimer -= dt; if (state.toastTimer <= 0) ui.toast.classList.remove("toast-visible"); }
     if (state.mode !== "playing") return;
-    state.elapsed += dt; state.bannerTimer = Math.max(0, state.bannerTimer - dt); updateHero(dt); updateWave(dt); updateEnemies(dt); updateBullets(dt); updateDrops(dt); updateParticles(dt); updateUi();
-    if (state.hero.hp <= 0 || state.baseHp <= 0) gameOver();
+    state.elapsed += dt; state.bannerTimer = Math.max(0, state.bannerTimer - dt); updateHero(dt); updateWave(dt); updateEnemies(dt); updateBullets(dt); updateDrops(dt); updateParticles(dt);
+    if (state.artifactHp <= 0) { gameOver(); return; }
+    if (state.hero.hp <= 0) reviveHero();
+    updateUi();
   }
 
   function rect(x, y, w, h, color, cam, stroke) { const p = toScreen(x, y, cam); ctx.fillStyle = color; ctx.fillRect(p.x, p.y, w * cam.zoom, h * cam.zoom); if (stroke) { ctx.strokeStyle = stroke; ctx.strokeRect(p.x, p.y, w * cam.zoom, h * cam.zoom); } }
@@ -259,10 +272,19 @@
 
   function drawKeep(cam) {
     const keep = world.keep; rect(keep.x - 28, keep.y - 28, keep.w + 56, keep.h + 56, "#203a33", cam, "rgba(129, 214, 166, .3)"); rect(keep.x, keep.y, keep.w, keep.h, "#173028", cam);
-    circle(world.base.x, world.base.y, 160, "#448b6c", cam, .12); circle(world.base.x, world.base.y, 92, "#64d6a0", cam, .05);
-    rect(world.base.x - 37, world.base.y - 28, 74, 65, "#304844", cam); rect(world.base.x - 24, world.base.y - 65, 48, 42, "#465c55", cam); circle(world.base.x, world.base.y - 72, 19, palette.violet, cam, .58);
-    rect(world.base.x - 102, world.base.y + 78, 55, 14, palette.wood, cam); rect(world.base.x + 60, world.base.y + 84, 56, 14, palette.woodLight, cam);
+    drawArtifact(cam);
+    const artifact = world.artifact; rect(artifact.x - 102, artifact.y + 78, 55, 14, palette.wood, cam); rect(artifact.x + 60, artifact.y + 84, 56, 14, palette.woodLight, cam);
     state.fences.forEach(fence => drawFence(fence, cam));
+  }
+
+  function drawArtifact(cam) {
+    const artifact = world.artifact, pulse = 1 + Math.sin(state.elapsed * 3.1) * .08, p = toScreen(artifact.x, artifact.y, cam), radius = 76 * cam.zoom * pulse;
+    circle(artifact.x, artifact.y, 150, palette.violet, cam, .12); circle(artifact.x, artifact.y, 100, palette.blue, cam, .08);
+    rect(artifact.x - 45, artifact.y + 24, 90, 42, "#2c4542", cam); rect(artifact.x - 31, artifact.y + 8, 62, 24, "#49615a", cam);
+    ctx.save(); ctx.translate(p.x, p.y - 26 * cam.zoom); ctx.globalAlpha = state.artifactFlash > 0 ? .96 : .76; ctx.shadowBlur = 26 * cam.zoom; ctx.shadowColor = state.artifactFlash > 0 ? palette.orange : palette.violet; ctx.fillStyle = state.artifactFlash > 0 ? palette.orange : palette.violet;
+    ctx.beginPath(); ctx.moveTo(0, -radius); ctx.lineTo(radius * .62, 0); ctx.lineTo(0, radius); ctx.lineTo(-radius * .62, 0); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = palette.white; ctx.globalAlpha = .5; ctx.beginPath(); ctx.moveTo(0, -radius * .74); ctx.lineTo(radius * .42, 0); ctx.lineTo(0, radius * .3); ctx.closePath(); ctx.fill(); ctx.restore();
+    const width = 112 * cam.zoom, hp = state.artifactHp / state.artifactMaxHp; ctx.fillStyle = "rgba(0,0,0,.72)"; ctx.fillRect(p.x - width / 2, p.y - 105 * cam.zoom, width, 6 * cam.zoom); ctx.fillStyle = hp > .35 ? palette.violet : palette.red; ctx.fillRect(p.x - width / 2, p.y - 105 * cam.zoom, width * hp, 6 * cam.zoom);
   }
 
   function drawFence(fence, cam) {
