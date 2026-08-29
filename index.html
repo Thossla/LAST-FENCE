@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#08131b">
     <meta name="description" content="LAST FENCE – spielbare Browser-Beta">
     <title>LAST FENCE — Beta</title>
-    <link rel="stylesheet" href="beta.css?v=0.4.0">
+    <link rel="stylesheet" href="beta.css?v=0.5.0">
   </head>
   <body>
     <canvas id="game" aria-label="LAST FENCE Spielarena"></canvas>
@@ -18,6 +18,7 @@
         <p class="intro">Halte die Linie. Die Horde kommt erst durch, wenn sie den Zaun niedergerissen hat.</p>
         <button id="play" class="primary">BETA SPIELEN <span>→</span></button>
         <button id="help" class="secondary">STEUERUNG</button>
+        <button id="loadout" class="secondary">CHARAKTER ANPASSEN</button>
         <p class="hint">Für Desktop optimiert · keine Installation nötig</p>
       </section>
 
@@ -29,10 +30,23 @@
         <dl>
           <div><dt>WASD / PFEILE</dt><dd>Bewegen</dd></div>
           <div><dt>MAUS + KLICK / LEERTASTE</dt><dd>Zielen und feuern</dd></div>
+          <div><dt>F</dt><dd>Mana-Waffe einsetzen</dd></div>
           <div><dt>Q</dt><dd>Ausweichen</dd></div>
           <div><dt>R</dt><dd>Nahen Zaun reparieren (10 Schrott)</dd></div>
+          <div><dt>M</dt><dd>Arenakarte und Loot-Raritäten</dd></div>
+          <div><dt>C</dt><dd>Ausrüstung im Lauf anpassen</dd></div>
         </dl>
         <button id="startFromHelp" class="primary">LINIE HALTEN <span>→</span></button>
+      </section>
+
+      <section id="loadout-screen" class="panel modal hidden">
+        <button class="close" id="close-loadout" aria-label="Schließen">×</button>
+        <p class="kicker">RIFT-ARSENAL</p>
+        <h2>CHARAKTER ANPASSEN</h2>
+        <p>Wähle für jeden Slot eine Ausrüstung. Die Boni wirken sofort auf Leben, Mana, Schaden und Regeneration.</p>
+        <div id="loadout-grid" class="loadout-grid"></div>
+        <p id="loadout-stats" class="loadout-stats"></p>
+        <button id="loadout-back" class="primary">BEREIT <span>→</span></button>
       </section>
 
       <section id="gameover" class="panel modal hidden">
@@ -47,15 +61,17 @@
         <div class="card status-card">
           <span>HELD</span><b id="heroHealth">100 / 100</b>
           <div class="meter"><i id="heroMeter"></i></div>
+          <span>MANA</span><b id="manaValue">60 / 60</b>
+          <div class="meter mana"><i id="manaMeter"></i></div>
           <span>RIFT-ARTEFAKT</span><b id="keepHealth">250 / 250</b>
           <div class="meter base"><i id="keepMeter"></i></div>
         </div>
-        <div class="card wave-card"><span>WELLE <b id="wave">1</b></span><strong id="objective">BELAGERUNG BEGINNT</strong><small id="enemyCount">0 Gegner</small></div>
-        <div class="card resources"><span>SEELEN <b id="souls">0</b></span><span>SCHROTT <b id="scrap">0</b></span><small>R: Zaun reparieren</small></div>
+        <div class="card wave-card"><span>WELLE <b id="wave">1</b></span><strong id="objective">BELAGERUNG BEGINNT</strong><small id="enemyCount">0 Gegner</small><div class="xp-line"><span>LVL <b id="levelValue">1</b></span><div class="meter xp"><i id="xpMeter"></i></div><small id="xpValue">0 / 100 XP</small></div></div>
+        <div class="card resources"><span>SEELEN <b id="souls">0</b></span><span>SCHROTT <b id="scrap">0</b></span><small>F: Mana-Waffe · M: Karte · C: Ausrüstung</small></div>
         <div class="card fence-card"><span>NÄCHSTER ZAUN</span><b id="fenceHealth">100 / 100</b><div class="meter fence"><i id="fenceMeter"></i></div><small id="fenceStatus">INTAKT</small></div>
         <div id="toast"></div>
       </section>
     </main>
-    <script src="beta.js?v=0.4.0"></script>
+    <script src="beta.js?v=0.5.0"></script>
   </body>
 </html>

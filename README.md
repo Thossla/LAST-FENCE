@@ -15,8 +15,18 @@ Eine vollständig statische 2D-Browser-Beta. Es gibt keine Installation und kein
 
 - `WASD` oder Pfeiltasten: bewegen
 - Maus + Klick oder Leertaste: zielen und feuern
+- `F`: Mana-Waffe einsetzen
 - `Q`: Ausweichen
 - `R`: nächsten Zaun reparieren
+- `M`: komplette Arenakarte mit Gegnern, Loot-Drops und deren Rarität anzeigen
+- `C`: Charakter-Ausrüstung öffnen
+
+## Fortschritt und Ausrüstung
+
+- Besiegte Gegner, insbesondere Bosse, lassen Loot in fünf Raritäten fallen: gewöhnlich, ungewöhnlich, selten, episch und legendär.
+- Eingesammelter Loot gibt Schrott und XP. Level-ups erhöhen Leben, Mana und Schaden.
+- Im Charaktermenü lassen sich Schuhe, Hose, Brustplatte, Helm, drei Artefakt-Slots, Waffe und Mana-Waffe zusammenstellen.
+- Die Kamera folgt dem Helden weich über die größere Arena. Aim Assist hilft beim Zielen auf Gegner in der Nähe des Fadenkreuzes.
 
 ## GitHub Pages
 
