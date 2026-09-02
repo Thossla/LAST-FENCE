@@ -1,38 +1,38 @@
-# LAST FENCE — Browser Beta
+# LAST FENCE — Fortress Beta 0.7
 
-Eine vollständig statische 2D-Browser-Beta. Es gibt keine Installation und keine Abhängigkeiten: `index.html` öffnen oder über GitHub Pages spielen.
+Eine vollständig statische, spielbare 2D-Browser-Beta. `index.html` öffnen oder über GitHub Pages spielen.
 
-## Der Zaun lebt
+## Neu in Beta 0.7
 
-- In der Mitte der Festung steht ein Rift-Artefakt mit eigenen Strukturpunkten. Nur dessen Zerstörung beendet den Run.
-- Stirbt der Held, wird er am Rift-Artefakt mit voller Gesundheit wiederbelebt.
-- Die Festung besteht aus 28 separaten Zaunsegmenten mit eigenen Strukturpunkten.
-- Jeder Gegner wählt ein Segment, belagert es und verursacht dort Schaden.
-- Erst nach der Zerstörung dieses Segments durchquert der Gegner die Bresche und kann die Festung angreifen.
-- Mit `R` repariert der Held ein nahes, beschädigtes Segment für 10 Schrott.
+- deutlich größere, detailreichere Arena mit fünf Biomen, Ruinen, Kristallfeldern, Lagern und bewachten Rift-Caches
+- überarbeitete blockige Gegner mit eigenem Aussehen für Raider, Mauler, Hexer, Cache Guardian und The Breaker
+- fünf bewachte Loot-Caches; nach dem Öffnen wird die erhaltene Beute mit Name, Seltenheit und Werten angezeigt
+- komplett überarbeitete Charakter-, Inventar- und Verzauberungsmenüs
+- funktionale Verzauberungen: Glutschlag, Sturmkette, Frostbiss und Seelendurst
+- echte Mana-Leiste und drei unterschiedliche Mana-Waffen mit eigenen Kosten und Effekten
+- Nekromanten-Siegel: Nur mit diesem Artefakt können Seelen als Verbündete beschworen werden
+- ohne Nekromanten-Siegel werden Seelen im Inventar zum Verbessern von Waffen und Rüstungen verwendet
+
+## Festungsregeln
+
+- Das Rift-Artefakt besitzt eigene Strukturpunkte und belebt den Helden wieder.
+- Jedes Zaunsegment hat eigene Strukturpunkte.
+- Gegner können die Festung nur durch ein zuvor zerstörtes Segment betreten.
+- `R` repariert ein nahes Segment für 10 Schrott.
 
 ## Steuerung
 
 - `WASD` oder Pfeiltasten: bewegen
-- Maus + Klick oder Leertaste: zielen und feuern
-- `F`: Mana-Waffe einsetzen
+- Maus + Klick oder Leertaste: Primärwaffe abfeuern
+- `F`: ausgerüstete Mana-Waffe einsetzen
+- `E`: gesicherten Loot-Cache öffnen
+- `G`: Seelen beschwören, wenn das Nekromanten-Siegel ausgerüstet ist
 - `Q`: Ausweichen
-- `R`: nächsten Zaun reparieren
-- `M`: komplette Arenakarte mit Gegnern, Loot-Drops und deren Rarität anzeigen
-- `I`: Inventar mit allen eingesammelten Gegenständen öffnen
-- `C`: Charakter-Ausrüstung öffnen
+- `R`: nahes Zaunsegment reparieren
+- `M`: Arenakarte öffnen
+- `I`: Arsenal und Inventar öffnen
+- `C`: Charakter und Ausrüstung öffnen
 
-## Fortschritt und Ausrüstung
-
-- Besiegte Gegner lassen sichtbar einsammelbare Seelen-XP fallen. Der Boss hinterlässt besonders viele XP-Orbs.
-- Mit jeder eingesammelten XP steigt der Held im Level; Level-ups erhöhen Leben, Mana, Schaden und Mana-Regeneration dauerhaft für den laufenden Run.
-- Loot fällt in fünf Raritäten: gewöhnlich, ungewöhnlich, selten, episch und legendär. Die Beute wird im Inventar nach Waffen, Rüstung, Artefakten, Materialien und Seelen sortiert.
-- Im Charaktermenü lassen sich Schuhe, Hose, Brustplatte, Helm, drei Artefakt-Slots, Waffe und Mana-Waffe zusammenstellen.
-- Die Kamera folgt dem Helden weich über die größere Arena. Aim Assist hilft beim Zielen auf Gegner in der Nähe des Fadenkreuzes.
-- Die Arena enthält nun Ruinen, Wachtürme, Rift-Stationen, farbige Versorgungskisten und eine detailreichere strategische Karte im gleichen dunklen Blau-Gold-Stil wie Menü und Inventar.
-
-## GitHub Pages
-
-GitHub Pages veröffentlicht den Inhalt des Repository-Ordners `main / (root)`. Nach einem Commit auf `main` ist die Beta kurz darauf verfügbar unter:
+## Online
 
 `https://thossla.github.io/LAST-FENCE/`

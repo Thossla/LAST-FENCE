@@ -1,0 +1,26 @@
+.enchant-panel{position:absolute;left:50%;top:50%;width:min(1180px,calc(100vw - 34px));max-height:calc(100vh - 32px);max-width:none;overflow:auto;transform:translate(-50%,-50%);padding:34px;text-align:left}
+.enchant-layout{display:grid;grid-template-columns:330px 1fr;gap:14px;margin:22px 0}
+.enchant-weapon{position:relative;display:flex;min-height:430px;flex-direction:column;align-items:center;justify-content:center;padding:25px;border:1px solid color-mix(in srgb,var(--enchant) 50%,#283a46);background:radial-gradient(circle,color-mix(in srgb,var(--enchant) 18%,#0b1620),#050b11 70%);text-align:center;overflow:hidden}
+.enchant-weapon::before{content:"";position:absolute;width:240px;height:240px;border:1px solid color-mix(in srgb,var(--enchant) 45%,transparent);transform:rotate(45deg);animation:forge 12s linear infinite}
+.enchant-weapon>span{z-index:1;color:var(--enchant);font-size:70px;filter:drop-shadow(0 0 22px var(--enchant))}
+.enchant-weapon h3,.enchant-weapon b,.enchant-weapon p,.enchant-weapon small,.enchant-weapon em{z-index:1}
+.enchant-weapon h3{margin:14px 0 4px;font:700 27px Georgia}.enchant-weapon b{color:var(--enchant);font-size:11px;letter-spacing:.12em}.enchant-weapon p{color:#8fa4af;line-height:1.5}.enchant-weapon em{color:#d8c697;font:900 9px system-ui;letter-spacing:.1em}
+.enchant-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}.enchant-option{display:grid;grid-template-columns:54px 1fr auto;align-items:center;gap:12px;min-height:130px;padding:14px;border:1px solid color-mix(in srgb,var(--enchant) 40%,#263944);background:linear-gradient(130deg,color-mix(in srgb,var(--enchant) 10%,#10202a),#071018);color:#dce6e7;text-align:left}.enchant-option>i{display:grid;place-items:center;width:50px;height:50px;border:1px solid var(--enchant);color:var(--enchant);font-style:normal;font-size:25px}.enchant-option span b,.enchant-option span small{display:block}.enchant-option span b{font:700 15px Georgia;color:var(--enchant)}.enchant-option span small{margin-top:7px;color:#78919f;line-height:1.4}.enchant-option>strong{color:#d8c18d;font-size:9px}.enchant-option.active{box-shadow:inset 0 0 30px color-mix(in srgb,var(--enchant) 12%,transparent)}
+@keyframes forge{to{transform:rotate(405deg)}}
+.loot-reveal{z-index:40;width:min(560px,calc(100vw - 34px));text-align:center;border-color:var(--loot)}.loot-beam{position:absolute;left:50%;top:0;width:190px;height:230px;transform:translateX(-50%);background:linear-gradient(color-mix(in srgb,var(--loot) 28%,transparent),transparent);clip-path:polygon(38% 0,62% 0,100% 100%,0 100%);pointer-events:none}.loot-icon{position:relative;display:grid;place-items:center;width:105px;height:105px;margin:15px auto 18px;border:2px solid var(--loot);color:var(--loot);background:color-mix(in srgb,var(--loot) 12%,#081018);box-shadow:0 0 55px color-mix(in srgb,var(--loot) 38%,transparent);font-size:52px;animation:lootPulse 1.8s ease-in-out infinite}.loot-rarity{position:relative;color:var(--loot);font-size:11px;font-weight:950;letter-spacing:.2em}.loot-reveal h2{position:relative;font-size:36px}.loot-reveal>p:not(.kicker,.loot-rarity,.loot-stats){position:relative;color:#9aadb5}.loot-stats{position:relative;padding:12px;border:1px solid color-mix(in srgb,var(--loot) 35%,transparent);color:#e4cc9b;background:#09151c;font-weight:850}.loot-reveal .primary{position:relative}
+@keyframes lootPulse{50%{transform:translateY(-7px);filter:brightness(1.25)}}
+.weapon-card{left:28px;bottom:28px;min-width:245px}.weapon-card>b{display:block;float:none;margin:2px 0 6px;color:#edf4f4;font:700 13px Georgia}.weapon-card>small{display:block;margin-bottom:9px;color:#59bdff;font-size:9px;letter-spacing:.1em}.interaction{position:absolute;left:50%;bottom:88px;z-index:8;min-width:280px;padding:12px 18px;transform:translateX(-50%);border:1px solid #deb86f;background:rgba(15,13,9,.94);box-shadow:0 0 30px #d9a64b22;color:#f0d69f;text-align:center;font-size:10px;font-weight:900;letter-spacing:.12em}.resources{right:28px;top:28px}.resources span{display:block;margin-bottom:4px}.resources span b{float:right;margin-left:16px;color:#e7dcc5}
+@media(max-width:980px){.character-layout{grid-template-columns:1fr}.character-stage{min-height:390px}.character-model{transform:scale(.82)}.enchant-layout{grid-template-columns:1fr}.enchant-weapon{min-height:300px}.weapon-card{display:none}.main-menu-actions{grid-template-columns:1fr}.main-menu-actions .primary{grid-column:auto}}
+@media(max-width:650px){.start-panel{left:12px;width:calc(100vw - 24px);padding:30px 24px 24px}.enchant-grid{grid-template-columns:1fr}.inventory-content{grid-template-columns:1fr}.vault-summary{flex-wrap:wrap}.resources{display:none}.interaction{bottom:24px;min-width:230px}.brand-sigil{display:none}}
+/* Keep the cinematic vignette behind every interactive interface layer. */
+canvas {
+  z-index: 0;
+}
+
+body::after {
+  z-index: 1;
+}
+
+#ui {
+  z-index: 2;
+}
