@@ -1,0 +1,20 @@
+/* Compact 2D mini-game art pass. No external fonts, images or network assets. */
+.start-panel{width:min(620px,calc(100vw - 32px));padding:clamp(22px,3.5vh,42px) 38px 28px}
+.start-panel .hint{margin-top:14px}
+.main-menu-actions .admin-button{grid-column:1/-1;min-height:47px;border-color:#af8142;color:#ffdf9d;background:linear-gradient(100deg,#3e2c17,#171a21 60%);box-shadow:inset 4px 0 #dcac59,0 0 20px #d5a04418}
+.main-menu-actions .admin-button span{color:#f6ce7a}
+.loadout-slot{border-left:3px solid var(--slot-color,#59bdff)}
+.loadout-slot::before{color:var(--slot-color,#59bdff);border-color:var(--slot-color,#59bdff);background:color-mix(in srgb,var(--slot-color,#59bdff) 16%,#101820);box-shadow:0 0 14px color-mix(in srgb,var(--slot-color,#59bdff) 30%,transparent)}
+.artifact-card{right:28px;bottom:28px;min-width:220px;max-width:255px;border-color:#a376b566;background:linear-gradient(150deg,#1a1230ed,#071018ee)}
+.artifact-card b{display:block;float:none;margin:4px 0;color:#e7d3ff;font:700 13px Georgia}
+.artifact-card small{display:block;color:#b995e8;font-size:9px;line-height:1.5;letter-spacing:.08em}
+.artifact-card small:last-child{margin-top:8px;padding-top:7px;border-top:1px solid #74588b66;color:#d7b66f}
+.inventory-panel .inventory-grid{min-height:350px}
+.inventory-panel .inventory-grid .locked-item{opacity:.55;filter:grayscale(.55);cursor:default;box-shadow:none}
+.inventory-panel .inventory-grid .locked-item i{font-style:normal;color:#a48bb0}
+.inventory-panel .inventory-grid .locked-item b{font-size:10px;letter-spacing:.07em}
+.inventory-detail .item-statline{color:#f2d697}
+.fence-card{left:28px;bottom:165px}
+.weapon-card{bottom:28px}
+@media(max-width:1000px){.artifact-card{right:12px;bottom:12px;max-width:180px;min-width:170px}.artifact-card b{font-size:11px}.fence-card{bottom:24px}.weapon-card{display:none}}
+@media(max-width:680px){.start-panel{left:12px;width:calc(100vw - 24px);padding:27px 21px 20px}.start-panel h1{font-size:clamp(49px,12vw,76px)}.main-menu-actions{grid-template-columns:1fr}.main-menu-actions .admin-button{grid-column:auto}.artifact-card{display:none}.character-stage{min-height:280px}.character-model{transform:scale(.7)}.loadout-grid{max-height:300px}}

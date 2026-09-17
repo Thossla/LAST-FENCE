@@ -3,6 +3,8 @@
 
   const canvas = document.querySelector("#game");
   const ctx = canvas.getContext("2d");
+  const catalogue = window.LF_CATALOG;
+  if (!catalogue || catalogue.items.length !== 42) throw new Error("LAST FENCE: Ausrüstungskatalog fehlt oder ist unvollständig.");
   const ui = {
     start: document.querySelector("#start"), help: document.querySelector("#instructions"), over: document.querySelector("#gameover"), hud: document.querySelector("#hud"),
     heroHealth: document.querySelector("#heroHealth"), heroMeter: document.querySelector("#heroMeter"), manaValue: document.querySelector("#manaValue"), manaMeter: document.querySelector("#manaMeter"), keepHealth: document.querySelector("#keepHealth"), keepMeter: document.querySelector("#keepMeter"),
@@ -22,9 +24,9 @@
     mode: "menu", hero: null, enemies: [], bullets: [], particles: [], drops: [], fences: [],
     artifactHp: 250, artifactMaxHp: 250, artifactFlash: 0, scrap: 0, souls: 0, kills: 0, wave: 0, spawnLeft: 0, spawnTimer: 0, nextWaveTimer: 0,
     elapsed: 0, fireTimer: 0, manaFireTimer: 0, dashTimer: 0, summonTimer: 0, toastTimer: 0, bannerTimer: 0, nextEnemy: 1, mapOpen: false, loadoutOpen: false,
-    level: 1, xp: 0, xpToLevel: 100, levelDamage: 0, camera: { x: 0, y: 0, ready: false }, equipment: { boots: 0, pants: 0, chest: 0, helmet: 0, artifact1: 0, artifact2: 0, artifact3: 0, weapon: 0, manaWeapon: 0 },
+    level: 1, xp: 0, xpToLevel: 100, levelDamage: 0, camera: { x: 0, y: 0, ready: false }, equipment: { boots: 0, pants: 0, chest: 0, helmet: 0, artifact: 0, weapon: 0, manaWeapon: 0 },
     inventory: [], inventoryFilter: "ALL", selectedInventory: 0, nextInventoryId: 1, inventoryOpen: false, enchantOpen: false, lootOpen: false, activeCache: null,
-    riftDust: 30, weaponLevel: 1, armorLevel: 1, weaponEnchant: "none", allies: []
+    riftDust: 30, weaponLevel: 1, armorLevel: 1, weaponEnchant: "none", allies: [], admin: false, artifactTimer: 1, artifactFx: [], sentinel: null, attackFx: 0, fortified: 0, shieldTimer: 0, titanTimer: 0, dashCount: 0, baseLevel: 1
   };
 
   const enemyKinds = {
@@ -36,25 +38,19 @@
     breaker: { name: "THE BREAKER", hp: 680, speed: 23, damage: 34, attack: 1.05, radius: 52, color: "#6c3a46", reward: 55 }
   };
 
-  const gearSlots = {
-    boots: { label: "SCHUHE", options: [{ name: "Wanderstiefel", bonus: "Geschwindigkeit +0" }, { name: "Rift-Läufer", bonus: "Tempo +24" }, { name: "Kriegsstiefel", bonus: "Leben +12" }] },
-    pants: { label: "HOSE", options: [{ name: "Feldhose", bonus: "Keine Werte" }, { name: "Nebelgamaschen", bonus: "Mana +18" }, { name: "Bollwerk-Beinschutz", bonus: "Leben +20" }] },
-    chest: { label: "BRUSTPLATTE", options: [{ name: "Jägerweste", bonus: "Leben +10" }, { name: "Arkane Platten", bonus: "Mana +25" }, { name: "Titanenpanzer", bonus: "Leben +38" }] },
-    helmet: { label: "HELM", options: [{ name: "Aufklärerhelm", bonus: "Keine Werte" }, { name: "Warden's Helm", bonus: "Aim Assist +" }, { name: "Rift-Krone", bonus: "Schaden +7" }] },
-    artifact1: { label: "ARTEFAKT I", options: [{ name: "Leerer Sockel", bonus: "Seelen verbessern Ausrüstung" }, { name: "Sonnenkern", bonus: "Leben +18" }, { name: "Nekromanten-Siegel", bonus: "G: Seelen beschwören" }] },
-    artifact2: { label: "ARTEFAKT II", options: [{ name: "Leerer Sockel", bonus: "—" }, { name: "Mondsplitter", bonus: "Mana-Regen +3" }, { name: "Kriegsrune", bonus: "Schaden +5" }] },
-    artifact3: { label: "ARTEFAKT III", options: [{ name: "Leerer Sockel", bonus: "—" }, { name: "Bollwerksamulett", bonus: "Artefakt-HP +50" }, { name: "Glücksmünze", bonus: "Loot +" }] },
-    weapon: { label: "WAFFE", options: [{ name: "Arc Reaper", bonus: "Schaden 25" }, { name: "Sonnenklinge", bonus: "Schaden +9" }, { name: "Rift-Kanone", bonus: "Schaden +16" }] },
-    manaWeapon: { label: "MANA-WAFFE", options: [{ name: "Blauer Stab", bonus: "F: 60 Schaden" }, { name: "Void-Katalysator", bonus: "F: 80 Schaden" }, { name: "Sturmfokus", bonus: "F: Kette +" }] }
-  };
+  const labels = {weapon:"WAFFE",manaWeapon:"MANA-WAFFE",helmet:"HELM",chest:"BRUSTPLATTE",pants:"HOSE",boots:"SCHUHE",artifact:"ARTEFAKT"};
+  const gearSlots = Object.fromEntries(Object.keys(labels).map(slot => [slot,{label:labels[slot],options:[catalogue.starters[slot],...catalogue.items.filter(item=>item.slot===slot)]}]));
+  const equipped = slot => gearSlots[slot].options[state.equipment[slot]] || catalogue.starters[slot];
+  const owns = item => item.starter || state.inventory.some(entry => entry.catalogueId === item.id);
 
   const supplyCaches = [
-    { id: "northwest", x: 690, y: 620, rarity: "SELTEN", color: "#63aaff", label: "RARE SUPPLY DROP", reward: { name: "Thunderbolt Rifle", category: "WEAPONS", description: "Schnelle Rift-Fernwaffe mit präzisem Dreifachkern.", stats: "+9 Primärschaden", equip: { slot: "weapon", index: 1 }, icon: "➤" } },
-    { id: "northeast", x: 3920, y: 650, rarity: "EPISCH", color: "#c48cff", label: "EPIC ARCANE DROP", reward: { name: "Stormcaller Staff", category: "WEAPONS", description: "Ein Blitzstab, dessen Entladung zwischen Zielen springt.", stats: "F: Kettenblitz · 30 Mana", equip: { slot: "manaWeapon", index: 2 }, icon: "ϟ" } },
-    { id: "southwest", x: 720, y: 2670, rarity: "LEGENDÄR", color: "#ffad46", label: "LEGENDARY WARDEN CACHE", reward: { name: "Tempest Cuirass", category: "ARMOR", description: "Schwere Wächterplatte mit eingebrannten Sturmrunen.", stats: "+25 Mana · hohe Rüstung", equip: { slot: "chest", index: 1 }, icon: "♜" } },
-    { id: "southeast", x: 3900, y: 2670, rarity: "MYTHISCH", color: "#ff5dbb", label: "SOULBOUND RELIC", reward: { name: "Nekromanten-Siegel", category: "ARTIFACTS", description: "Nur dieses Artefakt kann gefallene Seelen als Verbündete binden.", stats: "G: 3 Seelen beschwören", equip: { slot: "artifact1", index: 2 }, icon: "☠" } },
-    { id: "north", x: 2300, y: 360, rarity: "UNGEWÖHNLICH", color: "#71dc9e", label: "RIFT MATERIAL CACHE", reward: { name: "Runenstaub-Kassette", category: "MATERIALS", description: "Verdichteter Staub für die Verzauberungsschmiede.", stats: "+45 Riftstaub", dust: 45, icon: "✦" } }
+    { id: "northwest", x: 690, y: 620, label: "SELTENER WAFFEN-DROP", rewardId: "thunderbolt-rifle" },
+    { id: "northeast", x: 3920, y: 650, label: "EPISCHER MANA-DROP", rewardId: "stormcaller-staff" },
+    { id: "southwest", x: 720, y: 2670, label: "EPISCHE RÜSTUNG", rewardId: "tempest-cuirass" },
+    { id: "southeast", x: 3900, y: 2670, label: "MYTHISCHES RELIKT", rewardId: "necromancer-sigil" },
+    { id: "north", x: 2300, y: 360, label: "RUNENSTAUB", rarity: "UNGEWÖHNLICH", color: "#71dc9e", reward: {name:"Runenstaub-Kassette",category:"MATERIALS",description:"Verdichteter Staub für die Verzauberungsschmiede.",stats:"+45 Riftstaub",dust:45,icon:"✦"} }
   ];
+  const fixedCacheCount = supplyCaches.length;
 
   const enchantments = {
     none: { name: "UNVERZAUBERT", color: "#91a3aa", cost: 0, icon: "◇", description: "Reiner Waffenschaden ohne zusätzlichen Effekt." },
@@ -63,6 +59,10 @@
     frost: { name: "FROSTBISS", color: "#9de8ff", cost: 28, icon: "❄", description: "Getroffene Gegner werden mehrere Sekunden verlangsamt." },
     vampiric: { name: "SEELENDURST", color: "#e75b87", cost: 38, icon: "♥", description: "Ein Teil des verursachten Schadens heilt den Wächter." }
   };
+  function itemLine(item) { return [item.damage && `${item.damage} SCHADEN`,item.cost && `${item.cost} MANA`,item.health && `+${item.health} HP`,item.mana && `+${item.mana} MANA`,item.armor && `+${item.armor} RÜSTUNG`,item.speed && `+${Math.round(item.speed*100)} % TEMPO`,item.crit && `+${Math.round(item.crit*100)} % KRIT`].filter(Boolean).join(" · ") || "EIGENKRAFT"; }
+  function catalogueReward(item) { return {...item,catalogueId:item.id,description:item.power,stats:itemLine(item),equip:{slot:item.slot,index:gearSlots[item.slot].options.findIndex(option=>option.id===item.id)},icon:({weapon:"⚔",manaWeapon:"✦",artifact:"◆",helmet:"♜",chest:"▣",pants:"◈",boots:"♢"})[item.slot]}; }
+  function hydrateCache(cache) { if (!cache.rewardId) return; const item=catalogue.items.find(entry=>entry.id===cache.rewardId); cache.reward=catalogueReward(item); cache.rarity=item.rarity; cache.color=rarityColor(item.rarity); }
+  supplyCaches.forEach(hydrateCache);
   const decorations = buildDecorations();
 
   function clamp(n, min, max) { return Math.max(min, Math.min(max, n)); }
@@ -87,12 +87,8 @@
   }
 
   function stats() {
-    const gear = state.equipment;
-    const health = (gear.boots === 2 ? 12 : 0) + (gear.pants === 2 ? 20 : 0) + (gear.chest === 0 ? 10 : gear.chest === 2 ? 38 : 0) + (gear.artifact1 === 1 ? 18 : 0);
-    const mana = (gear.pants === 1 ? 18 : 0) + (gear.chest === 1 ? 25 : 0);
-    const damage = state.levelDamage + (gear.helmet === 2 ? 7 : 0) + (gear.artifact2 === 2 ? 5 : 0) + [25, 34, 41][gear.weapon] + (state.weaponLevel - 1) * 5;
-    const manaCosts = [24, 35, 30];
-    return { maxHp: 100 + (state.level - 1) * 15 + health + (state.armorLevel - 1) * 12, maxMana: 60 + (state.level - 1) * 12 + mana, speed: 230 + (gear.boots === 1 ? 24 : 0), manaRegen: 8 + (gear.artifact2 === 1 ? 3 : 0), damage, manaDamage: [60, 92, 74][gear.manaWeapon] + (state.weaponLevel - 1) * 4, manaCost: manaCosts[gear.manaWeapon], aimAssist: .16 + (gear.helmet === 1 ? .10 : 0), xpMultiplier: 1, lootLuck: gear.artifact3 === 2 ? .14 : 0, artifactMaxHp: 250 + (gear.artifact3 === 1 ? 50 : 0), canSummon: gear.artifact1 === 2 };
+    const pieces=Object.keys(gearSlots).map(equipped), sum=key=>pieces.reduce((total,item)=>total+(item[key]||0),0);
+    return {maxHp:100+(state.level-1)*15+sum("health")+(state.armorLevel-1)*12,maxMana:60+(state.level-1)*12+sum("mana"),armor:sum("armor")+(state.armorLevel-1)*10,speed:230*(1+sum("speed")),manaRegen:8+(equipped("pants").id==="riftborne-legguards"?4:0),damage:equipped("weapon").damage+state.levelDamage+(state.weaponLevel-1)*5,manaDamage:equipped("manaWeapon").damage+(state.weaponLevel-1)*6,manaCost:equipped("manaWeapon").cost,crit:.05+sum("crit"),aimAssist:equipped("helmet").id==="warden-helm"?.28:.16,xpMultiplier:1,lootLuck:0,artifactMaxHp:250,canSummon:equipped("artifact").id==="necromancer-sigil"};
   }
 
   function applyStats() {
@@ -107,10 +103,11 @@
     ui.loadoutGrid.innerHTML = "";
     Object.entries(gearSlots).forEach(([key, slot]) => {
       const option = slot.options[state.equipment[key]], button = document.createElement("button");
-      button.className = "loadout-slot"; button.type = "button"; button.dataset.slot = key;
-      button.innerHTML = `<small>${slot.label}</small><strong>${option.name}</strong><small>${option.bonus} · klicken zum Wechseln</small>`; ui.loadoutGrid.appendChild(button);
+      button.className = "loadout-slot"; button.type = "button"; button.dataset.slot = key; button.style.setProperty("--slot-color",option.color);
+      const count=slot.options.slice(1).filter(owns).length;
+      button.innerHTML = `<small>${slot.label} · ${count}/6 GEFUNDEN</small><strong>${option.name}</strong><small>${itemLine(option)} · KLICKEN ZUM WECHSELN</small>`; ui.loadoutGrid.appendChild(button);
     });
-    const value = stats(); ui.loadoutStats.innerHTML = [["LEBEN", value.maxHp], ["RÜSTUNG", `STUFE ${state.armorLevel}`], ["SCHADEN", value.damage], ["WAFFE", `STUFE ${state.weaponLevel}`], ["MANA", value.maxMana], ["MANA-REGEN", `${value.manaRegen}/s`], ["RIFT-ARTEFAKT", `${value.artifactMaxHp} HP`], ["SEELENKRAFT", value.canSummon ? "BESCHWÖRUNG" : "UPGRADES"]].map(([label, number]) => `<div><span>${label}</span><b>${number}</b></div>`).join("");
+    const value = stats(); ui.loadoutStats.innerHTML = [["KATALOG",`${catalogue.items.filter(owns).length}/42`],["LEBEN", value.maxHp], ["RÜSTUNG", value.armor], ["SCHADEN", value.damage], ["MANA", value.maxMana], ["ZAUBER",`${value.manaDamage} / ${value.manaCost} MANA`],["KRIT",`${Math.round(value.crit*100)} %`],["ARTEFAKT",value.canSummon?"TOTENRUF":equipped("artifact").name]].map(([label, number]) => `<div><span>${label}</span><b>${number}</b></div>`).join("");
   }
 
   function openLoadout() { closePanels(); state.loadoutOpen = true; renderLoadout(); ui.loadout.classList.remove("hidden"); if (state.mode === "menu") ui.start.classList.add("hidden"); }
@@ -118,25 +115,26 @@
 
   function rarityColor(rarity) { return ({ "GEWÖHNLICH": "#d9e2df", "UNGEWÖHNLICH": "#71dc9e", "SELTEN": "#63aaff", "EPISCH": "#c48cff", "LEGENDÄR": "#ffad46", "MYTHISCH": "#ff5dbb" })[rarity] || "#63aaff"; }
 
-  function addInventory(item) { state.inventory.push({ id: state.nextInventoryId++, color: rarityColor(item.rarity), ...item }); if (!state.selectedInventory) state.selectedInventory = state.inventory[state.inventory.length - 1].id; }
+  function addInventory(item) { if (item.catalogueId && state.inventory.some(entry=>entry.catalogueId===item.catalogueId)) {state.scrap+=12;state.riftDust+=5;return false;} state.inventory.push({ id: state.nextInventoryId++, color: rarityColor(item.rarity), ...item }); if (!state.selectedInventory) state.selectedInventory = state.inventory[state.inventory.length - 1].id; return true; }
+  function savedCollection(){try{const stored=JSON.parse(window.localStorage.getItem("last-fence-mini-collection")||"[]");return Array.isArray(stored)?stored.filter(id=>typeof id==="string"):[];}catch{return [];}}
+  function saveCollection(){if(state.admin)return;try{window.localStorage.setItem("last-fence-mini-collection",JSON.stringify(state.inventory.filter(item=>item.catalogueId&&!item.starter).map(item=>item.catalogueId)));}catch{}}
 
   function seedInventory() {
     state.inventory = []; state.nextInventoryId = 1; state.selectedInventory = 0;
-    [
-      { name: "Arc Reaper", rarity: "LEGENDÄR", category: "WEAPONS", description: "Energieschwert der letzten Wächter.", stats: "+25 Schaden · Aim Assist", equip: { slot: "weapon", index: 0 } },
-      { name: "Warden's Helm", rarity: "SELTEN", category: "ARMOR", description: "Helm mit Rift-Visor.", stats: "+Aim Assist", equip: { slot: "helmet", index: 1 } },
-      { name: "Sonnenkern", rarity: "UNGEWÖHNLICH", category: "ARTIFACTS", description: "Ein defensiver Kern für längere Belagerungen.", stats: "+18 Leben", equip: { slot: "artifact1", index: 1 }, icon: "☀" },
-      { name: "Rift Crystal", rarity: "UNGEWÖHNLICH", category: "MATERIALS", description: "Magisches Upgrade-Material.", stats: "Verzauberungs-Material" },
-      { name: "Grunt Soul", rarity: "GEWÖHNLICH", category: "SOULS", description: "Eine gebundene Rifts Seele.", stats: "Beschwörbar" }
-    ].forEach(addInventory);
+    Object.values(catalogue.starters).filter(item=>item.id!=="empty-artifact").forEach(item=>addInventory(catalogueReward(item)));
+    if (state.admin) catalogue.items.forEach(item=>addInventory(catalogueReward(item)));
+    else savedCollection().forEach(id=>{const item=catalogue.items.find(entry=>entry.id===id);if(item)addInventory(catalogueReward(item));});
   }
 
   function renderInventory() {
-    const items = state.inventory.filter(item => state.inventoryFilter === "ALL" || item.category === state.inventoryFilter);
+    const catalogView=state.inventoryFilter==="CATALOG";
+    const items = state.inventory.filter(item => catalogView ? item.catalogueId&&!item.starter : state.inventoryFilter === "ALL" || item.category === state.inventoryFilter);
     if (!items.some(item => item.id === state.selectedInventory)) state.selectedInventory = items[0]?.id || 0;
     ui.inventoryGrid.innerHTML = "";
-    if (!items.length) ui.inventoryGrid.innerHTML = "<p class=\"empty-inventory\">Keine Gegenstände in dieser Kategorie.</p>";
-    items.forEach(item => { const button = document.createElement("button"); button.className = `inventory-item${item.id === state.selectedInventory ? " selected" : ""}`; button.type = "button"; button.dataset.itemId = item.id; button.style.setProperty("--rarity", item.color); button.innerHTML = `<i>${item.icon || (item.category === "WEAPONS" ? "⚔" : item.category === "ARMOR" ? "♜" : item.category === "ARTIFACTS" ? "◆" : "✦")}</i><span><small>${item.rarity}</small><b>${item.name}</b><small>${item.category}</small></span>`; ui.inventoryGrid.appendChild(button); });
+    if (!items.length&&!catalogView) ui.inventoryGrid.innerHTML = "<p class=\"empty-inventory\">Keine Gegenstände in dieser Kategorie.</p>";
+    const display=catalogView?catalogue.items.map(locked=>({item:items.find(owned=>owned.catalogueId===locked.id),locked})):items.map(item=>({item}));
+    display.forEach(({item,locked}) => { const button = document.createElement("button"); button.className = `inventory-item${item?.id === state.selectedInventory ? " selected" : ""}${!item ? " locked-item" : ""}`; button.type = "button"; if(item)button.dataset.itemId = item.id;else button.disabled=true; button.style.setProperty("--rarity", item?.color||rarityColor(locked.rarity)); button.innerHTML = item?`<i>${item.icon || (item.category === "WEAPONS" ? "⚔" : item.category === "ARMOR" ? "♜" : item.category === "ARTIFACTS" ? "◆" : "✦")}</i><span><small>${item.rarity}</small><b>${item.name}</b><small>${item.category}</small></span>`:`<i>◇</i><span><small>${locked.rarity} · ${labels[locked.slot]}</small><b>NOCH NICHT GEFUNDEN</b><small>BEWACHTEN LOOTDROP FINDEN</small></span>`; ui.inventoryGrid.appendChild(button); });
+    const catalogTab=ui.inventoryTabs.querySelector('[data-filter="CATALOG"]');if(catalogTab)catalogTab.textContent=`KATALOG ${catalogue.items.filter(owns).length}/42`;
     const selected = state.inventory.find(item => item.id === state.selectedInventory); if (!selected) { ui.inventoryDetail.innerHTML = "<p>Wähle einen Gegenstand aus.</p>"; return; }
     const equipped = selected.equip && state.equipment[selected.equip.slot] === selected.equip.index;
     const action = selected.equip ? `<button class=\"secondary inventory-equip\" type=\"button\" data-equip-slot=\"${selected.equip.slot}\" data-equip-index=\"${selected.equip.index}\">${equipped ? "AUSGERÜSTET" : "AUSRÜSTEN"}</button>` : `<p class=\"collection-note\">SAMMLUNGSGEGENSTAND</p>`;
@@ -174,26 +172,41 @@
   function makeFence() {
     const { x, y, w, h } = world.keep;
     const fences = [];
-    const add = (x, y, side, normalX, normalY) => fences.push({ id: fences.length, x, y, side, normalX, normalY, hp: 100, maxHp: 100, breached: false, flash: 0 });
+    const add = (x, y, side, normalX, normalY) => fences.push({ id: fences.length, x, y, side, normalX, normalY, hp: 100, maxHp: 100, tier: 0, breached: false, flash: 0 });
     for (let xPos = x + 40; xPos < x + w - 30; xPos += 72) { add(xPos, y, "NORD", 0, -1); add(xPos, y + h, "SÜD", 0, 1); }
     for (let yPos = y + 46; yPos < y + h - 35; yPos += 72) { add(x, yPos, "WEST", -1, 0); add(x + w, yPos, "OST", 1, 0); }
     return fences;
   }
 
-  function reset() {
+  function reset(admin=false) {
+    state.admin=admin; Object.keys(state.equipment).forEach(slot=>state.equipment[slot]=0);
     state.level = 1; state.xp = 0; state.xpToLevel = 100; state.levelDamage = 0; state.mapOpen = false; state.loadoutOpen = false; state.inventoryOpen = false; state.enchantOpen = false; state.lootOpen = false; state.activeCache = null; state.riftDust = 30; state.weaponLevel = 1; state.armorLevel = 1; state.weaponEnchant = "none"; seedInventory();
     const value = stats(); state.hero = { x: world.artifact.x, y: world.artifact.y + 105, hp: value.maxHp, maxHp: value.maxHp, mana: value.maxMana, maxMana: value.maxMana, angle: -Math.PI / 2, invulnerable: 0 };
     state.enemies.length = 0; state.bullets.length = 0; state.particles.length = 0; state.drops.length = 0; state.allies.length = 0;
     state.fences = makeFence(); state.artifactMaxHp = value.artifactMaxHp; state.artifactHp = state.artifactMaxHp; state.artifactFlash = 0; state.scrap = 12; state.souls = 0; state.kills = 0; state.wave = 0;
-    state.spawnLeft = 0; state.spawnTimer = 0; state.nextWaveTimer = 0; state.elapsed = 0; state.fireTimer = 0; state.manaFireTimer = 0; state.dashTimer = 0; state.summonTimer = 0; state.nextEnemy = 1; supplyCaches.forEach(cache => { cache.opened = false; cache.unlocked = false; cache.guardIds = []; }); updateCamera(0, true);
+    state.spawnLeft = 0; state.spawnTimer = 0; state.nextWaveTimer = 0; state.elapsed = 0; state.fireTimer = 0; state.manaFireTimer = 0; state.dashTimer = 0; state.summonTimer = 0; state.nextEnemy = 1; state.shotCount=0; state.artifactTimer=1;state.artifactFx=[];state.sentinel=null;state.attackFx=0;state.fortified=0;state.shieldTimer=0;state.titanTimer=0;state.dashCount=0;state.baseLevel=1; world.keep={x:1740,y:1260,w:1120,h:780}; supplyCaches.splice(fixedCacheCount); supplyCaches.forEach(cache => { hydrateCache(cache); cache.opened = false; cache.unlocked = false; cache.guardIds = []; cache.landedAt=0; }); updateCamera(0, true);
     supplyCaches.forEach((cache, index) => spawnCacheGuardians(cache, 3 + (index % 3)));
     startWave();
   }
 
   function startWave() {
     state.wave += 1; state.spawnLeft = 5 + state.wave * 3; state.spawnTimer = .5; state.nextWaveTimer = 0; state.bannerTimer = 2.1;
+    if (state.wave > 1 && state.wave % 2 === 0) spawnDynamicCache();
     if (state.wave % 3 === 0) { state.spawnLeft += 1; showToast("THE BREAKER FÜHRT DIE BELAGERUNG"); }
     else showToast(`WELLE ${state.wave} BEGINNT — VERTEIDIGE DEN ZAUN`);
+  }
+
+  function spawnDynamicCache() {
+    const ranks=catalogue.rarities, maxRank=state.wave<=2?2:state.wave<=4?3:state.wave<=7?4:5;
+    let candidates=catalogue.items.filter(item=>!owns(item)&&ranks.indexOf(item.rarity)<=maxRank);
+    if (!candidates.length) candidates=catalogue.items.filter(item=>!owns(item));
+    if (!candidates.length) candidates=catalogue.items;
+    const item=candidates[Math.floor(Math.random()*candidates.length)];
+    let x=0,y=0;
+    for(let attempt=0;attempt<70;attempt++){x=random(190,world.width-190);y=random(190,world.height-190);const inside=x>world.keep.x-230&&x<world.keep.x+world.keep.w+230&&y>world.keep.y-230&&y<world.keep.y+world.keep.h+230;if(!inside&&!supplyCaches.some(cache=>Math.hypot(cache.x-x,cache.y-y)<380))break;}
+    const cache={id:`wave-${state.wave}`,x,y,rewardId:item.id,label:`${item.rarity}ER ${labels[item.slot]}-DROP`,opened:false,unlocked:false,guardIds:[],landedAt:state.elapsed};hydrateCache(cache);supplyCaches.push(cache);
+    const guards=2+Math.max(0,catalogue.rarities.indexOf(item.rarity));spawnCacheGuardians(cache,guards);
+    particle(x,y,cache.color,55,230,1.25);showToast(`NEUER ${item.rarity}ER LOOTDROP GELANDET — M FÜR KARTE`);
   }
 
   function chooseKind() {
@@ -235,6 +248,10 @@
     }
   }
 
+  function nearestEnemy(point,range=Infinity,exclude=null){let best=null,closest=range;for(const enemy of state.enemies){if(enemy===exclude||enemy.hp<=0)continue;const d=distance(point,enemy);if(d<closest){closest=d;best=enemy;}}return best;}
+  function energyArc(from,to,color,life=.34){state.artifactFx.push({type:"arc",x:from.x,y:from.y,tx:to.x,ty:to.y,color,life,maxLife:life});particle(to.x,to.y,color,8,90,.38);}
+  function areaDamage(point,radius,damage,enchant,color){let count=0;for(const enemy of state.enemies){if(enemy.hp<=0||distance(point,enemy)>radius)continue;enemy.hp-=damage;enemy.hitFlash=.18;if(enchant==="burning"){enemy.dot=3.3;enemy.dotDamage=9;}if(enchant==="frost")enemy.slow=3.2;count++;}state.artifactFx.push({type:"ring",x:point.x,y:point.y,radius,color,life:.55,maxLife:.55});particle(point.x,point.y,color,Math.min(30,10+count*4),125,.6);return count;}
+
   function damageFence(fence, damage) {
     if (fence.breached) return;
     fence.hp = Math.max(0, fence.hp - damage); fence.flash = .13; particle(fence.x, fence.y, palette.orange, 7, 90, .42);
@@ -247,7 +264,13 @@
   function damageHero(damage, source) {
     const hero = state.hero;
     if (hero.invulnerable > 0) return;
-    hero.hp = Math.max(0, hero.hp - damage); hero.invulnerable = .32; particle(source.x, source.y, palette.red, 8, 95, .45);
+    if(equipped("chest").id==="frostguard-plate"&&state.shieldTimer<=0){state.shieldTimer=8;hero.invulnerable=.3;particle(hero.x,hero.y,palette.blue,20,150,.55);showToast("EISSCHILD BLOCKT DEN TREFFER");return;}
+    const frontAngle=Math.atan2(source.y-hero.y,source.x-hero.x),braced=equipped("boots").id==="ironroot-boots"&&Math.abs(angleDifference(hero.angle,frontAngle))<1.1;
+    const elite=source.kind==="breaker"||source.kind==="guardian",value=stats(), reduction=clamp(value.armor*.004+(state.fortified>0?.18:0)+(braced?.16:0)+(elite&&equipped("helmet").id==="rift-king-crown"?.22:0)+(equipped("chest").id==="warden-fieldplate"&&hero.hp<hero.maxHp*.3?.16:0),0,.75);
+    hero.hp = Math.max(0, hero.hp - damage*(1-reduction)); hero.invulnerable = .32; particle(source.x, source.y, palette.red, 8, 95, .45);
+    if(equipped("pants").id==="tempest-tassets"&&Math.random()<.3){const target=nearestEnemy(hero,190);if(target){target.hp-=18;target.hitFlash=.15;energyArc(hero,target,palette.cyan);}}
+    if(equipped("chest").id==="rift-titan-armor"&&state.titanTimer<=0){state.titanTimer=5;areaDamage(hero,135,28,"shock",palette.violet);}
+    if(equipped("chest").id==="emberheart-carapace"&&distance(hero,source)<105&&state.titanTimer<=0){state.titanTimer=4;areaDamage(hero,120,26,"burning",palette.orange);}
   }
 
   function damageArtifact(damage) {
@@ -276,9 +299,8 @@
     else if (roll > .65) { rarity = "SELTEN"; color = "#63aaff"; multiplier = 2.2; }
     else if (roll > .38) { rarity = "UNGEWÖHNLICH"; color = "#71dc9e"; multiplier = 1.45; }
     const names = { "GEWÖHNLICH": "Verlorener Schrott", "UNGEWÖHNLICH": "Runenfragment", "SELTEN": "Sternensplitter", "EPISCH": "Rift-Relikt", "LEGENDÄR": "Kern der Dämmerung" };
-    const category = rarity === "LEGENDÄR" || rarity === "EPISCH" ? "ARTIFACTS" : rarity === "SELTEN" ? "WEAPONS" : "MATERIALS";
-    state.drops.push({ type: "loot", x: enemy.x, y: enemy.y, value: Math.round(config.reward * multiplier), rarity, color, name: names[rarity], category, description: `${rarity}e Beute aus der Rift-Belagerung.`, stats: `+${Math.round(config.reward * multiplier)} Schrott`, bob: Math.random() * Math.PI * 2 });
-    if (enemy.kind === "breaker") state.drops.push({ type: "loot", x: enemy.x + 35, y: enemy.y - 22, value: 80, rarity: "LEGENDÄR", color: "#ffad46", name: "Herz des Brechers", category: "ARTIFACTS", description: "Der lebende Kern eines besiegten Belagerungsgolems.", stats: "+80 Schrott · Boss-Artefakt", bob: Math.random() * Math.PI * 2 });
+    state.drops.push({ type: "loot", x: enemy.x, y: enemy.y, value: Math.round(config.reward * multiplier), rarity, color, name: names[rarity], category: "MATERIALS", description: `${rarity}es Handwerksmaterial aus der Rift-Belagerung. Ausrüstung gibt es aus bewachten Caches.`, stats: `+${Math.round(config.reward * multiplier)} Schrott`, bob: Math.random() * Math.PI * 2 });
+    if (enemy.kind === "breaker") state.drops.push({ type: "loot", x: enemy.x + 35, y: enemy.y - 22, value: 80, rarity: "LEGENDÄR", color: "#ffad46", name: "Herz des Brechers", category: "MATERIALS", description: "Der lebende Kern eines besiegten Belagerungsgolems.", stats: "+80 Schrott · Boss-Material", bob: Math.random() * Math.PI * 2 });
   }
 
   function soulUpgrade(category) {
@@ -304,8 +326,8 @@
     const cache = state.activeCache;
     if (!cache.unlocked) { showToast("BESIEGE ZUERST DIE LOOT-WÄCHTER"); return; }
     cache.opened = true; const reward = { ...cache.reward, rarity: cache.rarity, color: cache.color, value: cache.rarity === "MYTHISCH" ? 90 : cache.rarity === "LEGENDÄR" ? 70 : cache.rarity === "EPISCH" ? 50 : 30 };
-    if (reward.dust) state.riftDust += reward.dust; else addInventory(reward); state.scrap += reward.value; state.lootOpen = true; pointer.down = false;
-    document.querySelector("#loot-icon").textContent = reward.icon || "◆"; document.querySelector("#loot-rarity").textContent = cache.rarity; document.querySelector("#loot-name").textContent = reward.name; document.querySelector("#loot-description").textContent = reward.description; document.querySelector("#loot-stats").textContent = `${reward.stats} · +${reward.value} Schrott`; document.querySelector("#loot-beam").style.setProperty("--loot", cache.color); ui.lootReveal.style.setProperty("--loot", cache.color); ui.lootReveal.classList.remove("hidden"); particle(cache.x, cache.y, cache.color, 42, 190, 1.15);
+    const fresh=reward.dust?(state.riftDust+=reward.dust,true):addInventory(reward);if(fresh&&reward.catalogueId)saveCollection();state.scrap += reward.value; state.lootOpen = true; pointer.down = false;
+    document.querySelector("#loot-icon").textContent = reward.icon || "◆"; document.querySelector("#loot-rarity").textContent = cache.rarity; document.querySelector("#loot-name").textContent = reward.name; document.querySelector("#loot-description").textContent = reward.description; document.querySelector("#loot-stats").textContent = `${reward.stats} · +${reward.value} Schrott${fresh?"":" · DUPLIKAT ZERLEGT"}`; document.querySelector("#loot-beam").style.setProperty("--loot", cache.color); ui.lootReveal.style.setProperty("--loot", cache.color); ui.lootReveal.classList.remove("hidden"); particle(cache.x, cache.y, cache.color, 42, 190, 1.15);
   }
   function closeLootReveal() { state.lootOpen = false; ui.lootReveal.classList.add("hidden"); showToast("BEUTE IM INVENTAR GESPEICHERT"); renderInventory(); }
 
@@ -338,23 +360,24 @@
   }
 
   function fire() {
-    const hero = state.hero;
-    if (state.fireTimer > 0) return;
-    const start = { x: hero.x + Math.cos(hero.angle) * 24, y: hero.y + Math.sin(hero.angle) * 24 }, enchant = enchantments[state.weaponEnchant], weapon = state.equipment.weapon;
-    const projectiles = weapon === 2 ? 3 : 1;
-    for (let i = 0; i < projectiles; i++) { const spread = (i - (projectiles - 1) / 2) * .09; state.bullets.push({ ...start, vx: Math.cos(hero.angle + spread) * (weapon === 2 ? 650 : 760), vy: Math.sin(hero.angle + spread) * (weapon === 2 ? 650 : 760), life: 1.05, damage: stats().damage * (weapon === 2 ? .76 : 1), radius: weapon === 2 ? 6 : 4, color: state.weaponEnchant === "none" ? palette.blue : enchant.color, enchant: state.weaponEnchant, owner: "hero" }); }
-    state.fireTimer = weapon === 1 ? .11 : weapon === 2 ? .32 : .16; particle(start.x, start.y, enchant.color, 5, 55, .25);
+    const hero=state.hero;if(state.fireTimer>0)return;const weapon=equipped("weapon"),id=weapon.id,values=stats(),start={x:hero.x+Math.cos(hero.angle)*28,y:hero.y+Math.sin(hero.angle)*28};state.attackFx=.25;
+    const count=id==="voidfang-twins"?2:id==="thunderbolt-rifle"?3:1, speed=id==="emberforge-maul"||id==="glacier-breaker"?570:760;
+    state.shotCount=(state.shotCount||0)+1;let damage=values.damage*(Math.random()<values.crit?1.75:1);if(id==="arc-reaper"&&state.shotCount%3===0)damage*=1.65;
+    const enchant=state.weaponEnchant!=="none"?state.weaponEnchant:id==="emberforge-maul"?"burning":id==="glacier-breaker"?"frost":id==="gravecaller-staff"?"vampiric":id==="thunderbolt-rifle"?"shock":"none";
+    const arcWave=id==="arc-reaper"&&state.shotCount%3===0;
+    for(let i=0;i<count;i++){const angle=hero.angle+(i-(count-1)/2)*(id==="voidfang-twins"?.13:.08);state.bullets.push({...start,vx:Math.cos(angle)*speed,vy:Math.sin(angle)*speed,life:1.15,damage:damage*(count>1?(id==="voidfang-twins"?.78:.55):1),radius:id==="emberforge-maul"||id==="glacier-breaker"?9:5,color:weapon.color,enchant,weaponId:id,arcWave,critical:damage>values.damage*1.7,explode:id==="emberforge-maul"?"burning":id==="glacier-breaker"?"frost":null,owner:"hero"});}
+    state.fireTimer=id==="voidfang-twins"?.13:id==="thunderbolt-rifle"?.3:id==="emberforge-maul"||id==="glacier-breaker"?.52:.21;particle(start.x,start.y,weapon.color,12,115,.34);
   }
 
   function fireManaWeapon() {
-    const hero = state.hero, value = stats(), cost = value.manaCost, manaWeapon = state.equipment.manaWeapon;
+    const hero = state.hero, value = stats(), cost = value.manaCost, weapon=equipped("manaWeapon"), id=weapon.id;
     if (state.mode !== "playing" || state.manaFireTimer > 0 || state.mapOpen || state.loadoutOpen || state.inventoryOpen || state.enchantOpen || state.lootOpen) return;
     if (hero.mana < cost) { showToast("ZU WENIG MANA FÜR DIE MANA-WAFFE"); return; }
-    hero.mana -= cost; state.manaFireTimer = manaWeapon === 1 ? 1.05 : .72;
-    const start = { x: hero.x + Math.cos(hero.angle) * 27, y: hero.y + Math.sin(hero.angle) * 27 };
-    const color = [palette.blue, palette.violet, "#66ddff"][manaWeapon], amount = manaWeapon === 0 ? 3 : 1;
-    for (let i = 0; i < amount; i++) { const spread = (i - (amount - 1) / 2) * .14; state.bullets.push({ ...start, vx: Math.cos(hero.angle + spread) * (manaWeapon === 1 ? 480 : 640), vy: Math.sin(hero.angle + spread) * (manaWeapon === 1 ? 480 : 640), life: manaWeapon === 1 ? 1.7 : 1.25, damage: value.manaDamage * (amount > 1 ? .58 : 1), radius: manaWeapon === 1 ? 15 : 9, color, mana: true, manaWeapon, enchant: manaWeapon === 2 ? "shock" : manaWeapon === 1 ? "vampiric" : "frost", owner: "hero" }); }
-    particle(start.x, start.y, color, 18, 115, .55);
+    const overload=equipped("pants").id==="manaweave-leggings"&&hero.mana>hero.maxMana*.95;hero.mana-=cost;state.manaFireTimer=id==="void-grimoire"?.92:id==="riftweaver-wand"?.4:.62;state.attackFx=.55;
+    const start={x:hero.x+Math.cos(hero.angle)*31,y:hero.y+Math.sin(hero.angle)*31}, count=id==="frost-prism"?3:1, damage=value.manaDamage*(overload?1.4:1), speed=id==="stormcaller-staff"?870:id==="void-grimoire"?360:610;
+    for(let i=0;i<count;i++){const angle=hero.angle+(i-(count-1)/2)*.18;state.bullets.push({...start,vx:Math.cos(angle)*speed,vy:Math.sin(angle)*speed,life:id==="void-grimoire"?2.2:1.65,damage,radius:id==="void-grimoire"?16:id==="pyre-scepter"?13:9,color:weapon.color,mana:true,manaId:id,homing:["riftweaver-wand","soul-lantern"].includes(id),explode:id==="pyre-scepter"?"burning":null,pierce:id==="void-grimoire"?4:1,hitIds:new Set(),enchant:id==="stormcaller-staff"?"shock":id==="frost-prism"?"frost":id==="soul-lantern"?"vampiric":"none",owner:"hero"});}
+    if(id==="stormcaller-staff"&&equipped("chest").id==="tempest-cuirass")hero.mana=Math.min(hero.maxMana,hero.mana+8);
+    particle(start.x,start.y,weapon.color,28,170,.7);state.artifactFx.push({type:"ring",x:start.x,y:start.y,radius:68,color:weapon.color,life:.5,maxLife:.5});
   }
 
   function summonSouls() {
@@ -363,7 +386,7 @@
     if (state.souls < 3) { showToast("ZU WENIG SEELEN — 3 BENÖTIGT"); return; }
     if (state.hero.mana < 12) { showToast("ZU WENIG MANA FÜR DIE BESCHWÖRUNG"); return; }
     state.souls -= 3; state.hero.mana -= 12; state.summonTimer = 4.5;
-    for (let i = 0; i < 3; i++) state.allies.push({ x: state.hero.x + random(-55, 55), y: state.hero.y + random(-55, 55), angle: 0, life: 24, fireTimer: random(0, .5), type: i === 2 ? "mage" : "skeleton" });
+    for (let i = 0; i < 3; i++) state.allies.push({ x: state.hero.x + random(-55, 55), y: state.hero.y + random(-55, 55), angle: 0, life: equipped("chest").id==="grave-mantle"?36:24, fireTimer: random(0, .5), type: i === 2 ? "mage" : "skeleton" });
     particle(state.hero.x, state.hero.y, "#9d6cff", 28, 150, .9); showToast("DREI GEFALLENE SEELEN BESCHWOREN");
   }
 
@@ -375,21 +398,50 @@
     }
   }
 
+  function updateArtifact(dt){
+    const artifact=equipped("artifact"),hero=state.hero;state.artifactTimer-=dt;
+    if(state.sentinel){const turret=state.sentinel;turret.life-=dt;turret.cooldown-=dt;if(turret.life<=0){particle(turret.x,turret.y,palette.gold,15,85,.5);state.sentinel=null;}else if(turret.cooldown<=0){const target=nearestEnemy(turret,600);if(target){target.hp-=26;target.hitFlash=.15;energyArc(turret,target,palette.gold,.2);turret.cooldown=.8;}}}
+    if(artifact.starter||artifact.id==="necromancer-sigil"||state.artifactTimer>0)return;
+    const target=nearestEnemy(hero,artifact.id==="storm-core"?780:430);if(!target){state.artifactTimer=.45;return;}
+    if(artifact.id==="fencers-sigil"){target.hp-=42;target.hitFlash=.2;energyArc(hero,target,artifact.color);state.artifactTimer=2.8;}
+    else if(artifact.id==="storm-core"){target.hp-=72;target.hitFlash=.2;energyArc({x:target.x-15,y:target.y-280},target,artifact.color,.45);let second=nearestEnemy(target,170,target);if(second){second.hp-=34;second.hitFlash=.2;energyArc(target,second,artifact.color);}state.artifactTimer=5;}
+    else if(artifact.id==="sun-core"){areaDamage(hero,215,48,"burning",artifact.color);state.artifactTimer=8;}
+    else if(artifact.id==="wind-crystal"){const vortex={x:target.x,y:target.y};for(const enemy of state.enemies){if(distance(enemy,vortex)>200||enemy.kind==="breaker")continue;enemy.x+=(vortex.x-enemy.x)*.3;enemy.y+=(vortex.y-enemy.y)*.3;enemy.hp-=30;enemy.hitFlash=.2;}state.artifactFx.push({type:"vortex",x:vortex.x,y:vortex.y,radius:165,color:artifact.color,life:.85,maxLife:.85});particle(vortex.x,vortex.y,artifact.color,40,175,.85);state.artifactTimer=9;}
+    else if(artifact.id==="warden-totem"){state.sentinel={x:hero.x+60,y:hero.y+35,life:15,cooldown:.1};particle(state.sentinel.x,state.sentinel.y,artifact.color,30,125,.65);state.artifactTimer=18;}
+  }
+
   function repairFence() {
     if (state.mode !== "playing") return;
     const fence = nearestFence(state.hero);
     if (distance(fence, state.hero) > 155) { showToast("ZUM ZAUN GEHEN, UM IHN ZU REPARIEREN"); return; }
-    if (state.scrap < 10) { showToast("ZU WENIG SCHROTT — BENÖTIGT 10"); return; }
+    const cost=equipped("pants").id==="frontier-greaves"?7:10;
+    if (state.scrap < cost) { showToast(`ZU WENIG SCHROTT — BENÖTIGT ${cost}`); return; }
     if (fence.hp >= fence.maxHp) { showToast("DIESES SEGMENT IST BEREITS INTAKT"); return; }
-    state.scrap -= 10; fence.hp = Math.min(fence.maxHp, fence.hp + 48); fence.breached = false;
+    state.scrap -= cost; fence.hp = Math.min(fence.maxHp, fence.hp + 48); fence.breached = false;if(equipped("pants").id==="bastion-cuisses")state.fortified=5;
     state.enemies.forEach(enemy => { if (enemy.fence === fence && enemy.phase !== "inside") enemy.phase = "siege"; });
     particle(fence.x, fence.y, palette.green, 20, 130, .8); showToast("ZAUNSEGMENT REPARIERT");
+  }
+
+  function upgradeFence(){
+    if(state.mode!=="playing")return;const fence=nearestFence(state.hero);if(distance(fence,state.hero)>155){showToast("GEH ZUM ZAUN, UM IHN ZU VERSTÄRKEN");return;}
+    if(fence.tier>=4){showToast("MAXIMALE ZAUNSTUFE ERREICHT");return;}
+    const cost=22+fence.tier*14,dust=fence.tier>=2?8:0;if(state.scrap<cost||state.riftDust<dust){showToast(`${cost} SCHROTT${dust?` + ${dust} RIFTSTAUB`:""} BENÖTIGT`);return;}
+    state.scrap-=cost;state.riftDust-=dust;fence.tier++;fence.maxHp+=75+fence.tier*25;fence.hp=fence.maxHp;fence.breached=false;particle(fence.x,fence.y,[palette.woodLight,palette.iron,palette.stone,palette.blue][fence.tier-1],26,140,.8);showToast(`ZAUNSEGMENT AUF STUFE ${fence.tier+1} VERSTÄRKT`);
+  }
+
+  function expandBase(){
+    if(state.mode!=="playing")return;if(state.baseLevel>=4){showToast("BASIS MAXIMAL AUSGEBAUT");return;}
+    const cost=85+state.baseLevel*40,dust=15+state.baseLevel*8;if(state.scrap<cost||state.riftDust<dust){showToast(`${cost} SCHROTT + ${dust} RIFTSTAUB FÜR AUSBAU BENÖTIGT`);return;}
+    state.scrap-=cost;state.riftDust-=dust;const previous=state.fences;world.keep.x-=70;world.keep.y-=55;world.keep.w+=140;world.keep.h+=110;state.baseLevel++;state.fences=makeFence();
+    state.fences.forEach(fence=>{const matching=previous.filter(old=>old.side===fence.side).sort((a,b)=>distance(a,fence)-distance(b,fence))[0];if(!matching)return;fence.tier=matching.tier;fence.maxHp=matching.maxHp;fence.hp=Math.max(1,Math.round(matching.hp/matching.maxHp*fence.maxHp));fence.breached=false;});
+    state.enemies.forEach(enemy=>{if(enemy.phase!=="guard"){enemy.fence=nearestFence(enemy);enemy.phase="siege";}});particle(world.artifact.x,world.artifact.y,palette.gold,48,220,1.1);showToast(`BASIS AUF STUFE ${state.baseLevel} ERWEITERT`);
   }
 
   function dash() {
     if (state.mode !== "playing" || state.dashTimer > 0) return;
     const hero = state.hero; hero.x = clamp(hero.x + Math.cos(hero.angle) * 145, 35, world.width - 35); hero.y = clamp(hero.y + Math.sin(hero.angle) * 145, 35, world.height - 35);
-    hero.invulnerable = .36; state.dashTimer = 1.8; particle(hero.x, hero.y, palette.blue, 18, 170, .5);
+    hero.invulnerable = .36;state.dashCount++;state.dashTimer = equipped("boots").id==="stormstep-boots"?1.1:equipped("boots").id==="riftstrider-boots"&&state.dashCount%2===0?.38:equipped("weapon").id==="voidfang-twins"?1.3:1.8; particle(hero.x, hero.y, equipped("boots").color, 18, 170, .5);
+    if(["stormstep-boots","embertrail-boots","ironhorn-greathelm"].some(id=>Object.keys(gearSlots).some(slot=>equipped(slot).id===id)))areaDamage(hero,105,24,equipped("boots").id==="embertrail-boots"?"burning":"shock",equipped("boots").color);
   }
 
   function updateHero(dt) {
@@ -399,12 +451,13 @@
     if (dx || dy) { hero.x += dx / length * stats().speed * dt; hero.y += dy / length * stats().speed * dt; }
     hero.x = clamp(hero.x, 28, world.width - 28); hero.y = clamp(hero.y, 28, world.height - 28);
     const pointerWorld = toWorld(pointer.x, pointer.y), rawAngle = Math.atan2(pointerWorld.y - hero.y, pointerWorld.x - hero.x);
-    hero.angle = assistedAngle(rawAngle); hero.invulnerable = Math.max(0, hero.invulnerable - dt); hero.mana = Math.min(hero.maxMana, hero.mana + stats().manaRegen * dt); state.fireTimer -= dt; state.manaFireTimer = Math.max(0, state.manaFireTimer - dt); state.dashTimer = Math.max(0, state.dashTimer - dt); state.summonTimer = Math.max(0, state.summonTimer - dt);
+    hero.angle = assistedAngle(rawAngle); hero.invulnerable = Math.max(0, hero.invulnerable - dt); hero.mana = Math.min(hero.maxMana, hero.mana + stats().manaRegen * dt); state.fireTimer -= dt; state.manaFireTimer = Math.max(0, state.manaFireTimer - dt); state.dashTimer = Math.max(0, state.dashTimer - dt); state.summonTimer = Math.max(0, state.summonTimer - dt);state.attackFx=Math.max(0,state.attackFx-dt);state.fortified=Math.max(0,state.fortified-dt);state.shieldTimer=Math.max(0,state.shieldTimer-dt);state.titanTimer=Math.max(0,state.titanTimer-dt);
+    if(["frostwalker-boots","soulbound-chains"].some(id=>[equipped("boots").id,equipped("pants").id].includes(id))&&Math.random()<dt*2)state.enemies.forEach(enemy=>{if(distance(hero,enemy)<155)enemy.slow=Math.max(enemy.slow,1.1);});
     if (pointer.down || keys.Space) fire();
   }
 
   function defeatEnemy(enemy) {
-    const index = state.enemies.indexOf(enemy); if (index < 0) return; const config = enemyKinds[enemy.kind]; state.kills++; state.souls += enemy.kind === "breaker" ? 8 : enemy.kind === "guardian" ? 3 : 1;
+    const index = state.enemies.indexOf(enemy); if (index < 0) return; const config = enemyKinds[enemy.kind]; state.kills++;let gained=enemy.kind==="breaker"?8:enemy.kind==="guardian"?3:1;if(equipped("weapon").id==="gravecaller-staff"){gained++;state.hero.hp=Math.min(state.hero.maxHp,state.hero.hp+4);}if(equipped("helmet").id==="soul-mask"&&state.kills%5===0)gained*=2;state.souls+=gained;
     particle(enemy.x, enemy.y, config.color, enemy.kind === "breaker" ? 35 : 12, enemy.kind === "breaker" ? 190 : 100, enemy.kind === "breaker" ? 1.2 : .7); rollLoot(enemy, config); spawnXpOrbs(enemy, config); state.enemies.splice(index, 1); if (enemy.kind === "breaker") showToast("THE BREAKER IST GEFALLEN");
   }
 
@@ -443,10 +496,18 @@
 
   function updateBullets(dt) {
     for (let i = state.bullets.length - 1; i >= 0; i--) {
-      const bullet = state.bullets[i]; bullet.x += bullet.vx * dt; bullet.y += bullet.vy * dt; bullet.life -= dt;
-      if (bullet.life <= 0 || bullet.x < 0 || bullet.y < 0 || bullet.x > world.width || bullet.y > world.height) { state.bullets.splice(i, 1); continue; }
-      let hit = null; for (const enemy of state.enemies) if (distance(bullet, enemy) < bullet.radius + enemyKinds[enemy.kind].radius) { hit = enemy; break; } if (!hit) continue;
-      hit.hp -= bullet.damage; hit.hitFlash = .1; particle(bullet.x, bullet.y, bullet.color || palette.blue, bullet.mana ? 9 : 4, bullet.mana ? 90 : 55, .32); applyEnchantHit(bullet, hit); state.bullets.splice(i, 1); if (hit.hp <= 0) defeatEnemy(hit);
+      const bullet=state.bullets[i];
+      if(bullet.homing){const target=nearestEnemy(bullet,620);if(target){const speed=Math.hypot(bullet.vx,bullet.vy),angle=Math.atan2(target.y-bullet.y,target.x-bullet.x),desiredX=Math.cos(angle)*speed,desiredY=Math.sin(angle)*speed;bullet.vx+=(desiredX-bullet.vx)*Math.min(1,dt*5);bullet.vy+=(desiredY-bullet.vy)*Math.min(1,dt*5);}}
+      bullet.x+=bullet.vx*dt;bullet.y+=bullet.vy*dt;bullet.life-=dt;if(bullet.manaId==="void-grimoire")bullet.radius=Math.min(29,bullet.radius+dt*10);
+      if(bullet.life<=0||bullet.x<0||bullet.y<0||bullet.x>world.width||bullet.y>world.height){if(bullet.explode)areaDamage(bullet,105,bullet.damage,bullet.explode,bullet.color);state.bullets.splice(i,1);continue;}
+      let hit=null;for(const enemy of state.enemies){if((!bullet.hitIds||!bullet.hitIds.has(enemy.id))&&enemy.hp>0&&distance(bullet,enemy)<bullet.radius+enemyKinds[enemy.kind].radius){hit=enemy;break;}}if(!hit)continue;
+      if(bullet.explode){areaDamage(bullet,bullet.mana?125:100,bullet.damage,bullet.explode,bullet.color);state.bullets.splice(i,1);continue;}
+      hit.hp-=bullet.damage;hit.hitFlash=.1;particle(bullet.x,bullet.y,bullet.color||palette.blue,bullet.mana?13:6,bullet.mana?110:65,.38);applyEnchantHit(bullet,hit);
+      if(bullet.arcWave)areaDamage(hit,68,bullet.damage*.25,"none",bullet.color);
+      if(bullet.critical&&equipped("helmet").id==="frost-crown"){hit.slow=Math.max(hit.slow||0,2.6);areaDamage(hit,78,bullet.damage*.25,"frost",palette.cyan);}
+      if(bullet.weaponId==="gravecaller-staff")state.hero.hp=Math.min(state.hero.maxHp,state.hero.hp+3);
+      if(bullet.hitIds){bullet.hitIds.add(hit.id);bullet.pierce--;if(bullet.pierce<=0)state.bullets.splice(i,1);}else state.bullets.splice(i,1);
+      if(hit.hp<=0)defeatEnemy(hit);
     }
   }
 
@@ -463,6 +524,7 @@
 
   function updateParticles(dt) {
     for (let i = state.particles.length - 1; i >= 0; i--) { const p = state.particles[i]; p.x += p.vx * dt; p.y += p.vy * dt; p.vx *= .94; p.vy *= .94; p.life -= dt; if (p.life <= 0) state.particles.splice(i, 1); }
+    for(let i=state.artifactFx.length-1;i>=0;i--){state.artifactFx[i].life-=dt;if(state.artifactFx[i].life<=0)state.artifactFx.splice(i,1);}
     state.fences.forEach(fence => fence.flash = Math.max(0, fence.flash - dt)); state.artifactFlash = Math.max(0, state.artifactFlash - dt);
   }
 
@@ -486,14 +548,14 @@
     ui.wave.textContent = state.wave; ui.objective.textContent = state.spawnLeft ? "BELAGERUNG LÄUFT" : state.enemies.length ? "BRESCHEN VERTEIDIGEN" : "NÄCHSTE WELLE";
     ui.enemyCount.textContent = `${state.enemies.length + state.spawnLeft} Gegner`; ui.souls.textContent = state.souls; ui.scrap.textContent = state.scrap; document.querySelector("#dust").textContent = state.riftDust;
     ui.levelValue.textContent = state.level; ui.xpMeter.style.width = `${state.xp / state.xpToLevel * 100}%`; ui.xpValue.textContent = `${state.xp} / ${state.xpToLevel} XP`;
-    ui.fenceHealth.textContent = `${Math.ceil(fence.hp)} / ${fence.maxHp}`; ui.fenceMeter.style.width = `${fencePercent}%`; ui.fenceStatus.textContent = fence.breached ? `BRESCHE — ${fence.side}` : `${fence.side}-ZAUN INTAKT`;
-    const weapon = gearSlots.weapon.options[state.equipment.weapon], manaWeapon = gearSlots.manaWeapon.options[state.equipment.manaWeapon], enchant = enchantments[state.weaponEnchant]; document.querySelector("#activeWeapon").textContent = `${weapon.name.toUpperCase()} · ${state.weaponLevel}`; document.querySelector("#activeEnchant").textContent = enchant.name; document.querySelector("#activeEnchant").style.color = enchant.color; document.querySelector("#activeManaWeapon").textContent = manaWeapon.name.toUpperCase(); document.querySelector("#manaCost").textContent = `F · ${stats().manaCost} MANA`;
+    ui.fenceHealth.textContent = `${Math.ceil(fence.hp)} / ${fence.maxHp}`; ui.fenceMeter.style.width = `${fencePercent}%`; ui.fenceStatus.textContent = fence.breached ? `BRESCHE — ${fence.side}` : `${fence.side}-ZAUN STUFE ${fence.tier+1} · BASIS ${state.baseLevel}`;
+    const weapon=equipped("weapon"),manaWeapon=equipped("manaWeapon"),artifact=equipped("artifact"),enchant=enchantments[state.weaponEnchant];document.querySelector("#activeWeapon").textContent=`${weapon.name.toUpperCase()} · ${state.weaponLevel}`;document.querySelector("#activeEnchant").textContent=enchant.name;document.querySelector("#activeEnchant").style.color=enchant.color;document.querySelector("#activeManaWeapon").textContent=manaWeapon.name.toUpperCase();document.querySelector("#manaCost").textContent=`F · ${stats().manaCost} MANA`;document.querySelector("#activeArtifact").textContent=artifact.name.toUpperCase();document.querySelector("#artifactStatus").textContent=artifact.starter?"IN LOOTDROPS FINDEN":stats().canSummon?"G · SEELEN BESCHWÖREN":`AUTOMATISCH · ${Math.max(0,state.artifactTimer).toFixed(1)} S`;document.querySelector("#catalogueCount").textContent=`KATALOG ${catalogue.items.filter(owns).length} / 42${state.admin?" · ADMIN":""}`;
   }
 
   function update(dt) {
     if (state.toastTimer > 0) { state.toastTimer -= dt; if (state.toastTimer <= 0) ui.toast.classList.remove("toast-visible"); }
     if (state.mode !== "playing" || state.mapOpen || state.loadoutOpen || state.inventoryOpen || state.enchantOpen || state.lootOpen) return;
-    state.elapsed += dt; state.bannerTimer = Math.max(0, state.bannerTimer - dt); updateHero(dt); updateCamera(dt); updateWave(dt); updateEnemies(dt); updateAllies(dt); updateBullets(dt); updateDrops(dt); updateParticles(dt); updateCaches();
+    state.elapsed += dt; state.bannerTimer = Math.max(0, state.bannerTimer - dt); updateHero(dt); updateCamera(dt); updateWave(dt); updateEnemies(dt); updateAllies(dt); updateBullets(dt); updateArtifact(dt); updateDrops(dt); updateParticles(dt); updateCaches();
     if (state.artifactHp <= 0) { gameOver(); return; }
     if (state.hero.hp <= 0) reviveHero();
     updateUi();
@@ -571,12 +633,24 @@
   }
 
   function drawHero(hero, cam) {
-    const p = toScreen(hero.x, hero.y, cam); ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(hero.angle); const scale = cam.zoom;
-    if (hero.invulnerable > 0 && Math.floor(hero.invulnerable * 24) % 2 === 0) ctx.globalAlpha = .38;
-    ctx.fillStyle = "rgba(0,0,0,.28)"; ctx.beginPath(); ctx.ellipse(0, 7 * scale, 25 * scale, 11 * scale, 0, 0, Math.PI * 2); ctx.fill(); ctx.globalAlpha = 1;
-    const gear = state.equipment, chestColor = ["#2a6b86", "#594d92", "#59645b"][gear.chest], helmetColor = ["#8db1bf", "#b399ff", "#edc15c"][gear.helmet], bootColor = ["#1b2c38", "#386a73", "#423d34"][gear.boots], weaponColor = [palette.blue, palette.gold, palette.violet][gear.weapon];
-    ctx.fillStyle="#142231";ctx.fillRect(-22*scale,-11*scale,8*scale,39*scale);ctx.fillStyle = bootColor; ctx.fillRect(-17 * scale, 17 * scale, 12 * scale, 11 * scale); ctx.fillRect(5 * scale, 17 * scale, 12 * scale, 11 * scale); ctx.fillStyle = chestColor; ctx.fillRect(-17 * scale, -14 * scale, 34 * scale, 37 * scale); ctx.fillStyle=shade(chestColor,1.35);ctx.fillRect(-17*scale,-13*scale,34*scale,6*scale);ctx.fillStyle="#657984";ctx.fillRect(-4*scale,-14*scale,8*scale,37*scale); ctx.fillStyle = helmetColor; ctx.fillRect(-14 * scale, -31 * scale, 28 * scale, 19 * scale); ctx.fillStyle = "#a66e4e"; ctx.fillRect(-11 * scale, -47 * scale, 22 * scale, 17 * scale);ctx.fillStyle="#17222a";ctx.fillRect(-14*scale,-49*scale,28*scale,7*scale);ctx.fillStyle=palette.blue;ctx.shadowBlur=12;ctx.shadowColor=palette.blue;ctx.fillRect(-2*scale,-43*scale,4*scale,12*scale);
-    ctx.fillStyle = weaponColor; ctx.shadowBlur=14;ctx.shadowColor=weaponColor;ctx.fillRect(13 * scale, -5 * scale, 38 * scale, 8 * scale); ctx.fillStyle = palette.white; ctx.fillRect(47 * scale, -4 * scale, 10 * scale, 6 * scale); ctx.restore();
+    const p=toScreen(hero.x,hero.y,cam),s=cam.zoom,w=equipped("weapon"),m=equipped("manaWeapon"),chest=equipped("chest"),helm=equipped("helmet"),pants=equipped("pants"),boots=equipped("boots"),artifact=equipped("artifact"),pulse=Math.sin(state.elapsed*4);
+    ctx.save();ctx.translate(p.x,p.y);ctx.rotate(hero.angle);ctx.scale(s,s);
+    if(hero.invulnerable>0&&Math.floor(hero.invulnerable*24)%2===0)ctx.globalAlpha=.45;
+    ctx.fillStyle="rgba(0,0,0,.38)";ctx.beginPath();ctx.ellipse(0,13,30,17,0,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle="#102631";ctx.beginPath();ctx.moveTo(-20,-9);ctx.lineTo(-33,39);ctx.lineTo(0,30);ctx.lineTo(30,41);ctx.lineTo(19,-9);ctx.fill();
+    ctx.fillStyle=pants.color;ctx.fillRect(-18,10,13,20);ctx.fillRect(5,10,13,20);ctx.fillStyle=boots.color;ctx.fillRect(-20,24,16,11);ctx.fillRect(4,24,16,11);ctx.fillStyle=shade(boots.color,1.45);ctx.fillRect(-19,25,15,3);ctx.fillRect(5,25,15,3);
+    ctx.fillStyle="#111b24";ctx.fillRect(-19,-17,38,40);ctx.fillStyle=chest.color;ctx.fillRect(-17,-14,34,35);ctx.fillStyle=shade(chest.color,1.35);ctx.fillRect(-18,-16,36,6);ctx.fillStyle=shade(chest.color,.7);ctx.fillRect(-4,-14,8,34);
+    ctx.fillStyle=chest.color;ctx.fillRect(-26,-12,10,15);ctx.fillRect(16,-12,10,15);ctx.fillStyle=shade(chest.color,1.55);ctx.fillRect(-25,-11,9,4);ctx.fillRect(16,-11,9,4);
+    ctx.save();ctx.shadowColor=chest.color;ctx.shadowBlur=14;ctx.fillStyle=chest.color;ctx.beginPath();ctx.arc(0,1,4+Math.abs(pulse)*2,0,Math.PI*2);ctx.fill();ctx.restore();
+    ctx.fillStyle=helm.color;ctx.fillRect(-15,-32,30,21);ctx.fillStyle=shade(helm.color,1.4);ctx.fillRect(-16,-34,32,6);ctx.fillStyle="#071420";ctx.fillRect(-11,-25,22,7);ctx.fillStyle=helm.color;ctx.fillRect(-4,-28,8,13);
+    if(state.equipment.helmet>=4){ctx.fillStyle=helm.color;for(let i=-1;i<=1;i++)ctx.fillRect(i*13-3,-39-Math.abs(i)*3,6,12);}
+    ctx.save();ctx.shadowColor=helm.color;ctx.shadowBlur=15;ctx.fillStyle=helm.color;ctx.fillRect(-8,-23,16,3);ctx.restore();
+    ctx.save();ctx.translate(17,-4);ctx.rotate(-state.attackFx*2.5);ctx.fillStyle="#3a3230";ctx.fillRect(0,-4,20,8);ctx.shadowColor=w.color;ctx.shadowBlur=18;ctx.fillStyle=w.color;
+    if(w.id==="emberforge-maul"||w.id==="glacier-breaker"){ctx.fillRect(22,-13,27,26);ctx.fillStyle=shade(w.color,1.45);ctx.fillRect(28,-9,15,18);}else if(w.id==="thunderbolt-rifle"){ctx.fillRect(16,-7,41,14);ctx.fillRect(28,-13,13,6);ctx.fillStyle=palette.white;ctx.fillRect(52,-2,9,4);}else if(w.id==="voidfang-twins"){ctx.fillRect(17,-13,29,6);ctx.fillRect(17,7,29,6);}else if(w.id==="gravecaller-staff"){ctx.fillRect(18,-3,44,6);ctx.fillRect(47,-17,7,19);ctx.fillRect(52,-17,15,6);}else{ctx.fillRect(18,-5,39,10);ctx.fillRect(51,-3,15,6);}ctx.restore();
+    ctx.save();ctx.translate(-21,3+Math.sin(state.elapsed*3)*2);ctx.rotate(Math.sin(state.elapsed*2)*.18);ctx.fillStyle="#303944";ctx.fillRect(-13,-4,18,8);ctx.fillStyle=m.color;ctx.shadowColor=m.color;ctx.shadowBlur=13;
+    if(m.id==="void-grimoire"){ctx.fillRect(-32,-20,29,29);ctx.fillStyle=palette.white;ctx.fillRect(-19,-14,4,17);}else if(m.id==="soul-lantern"){ctx.fillRect(-27,-12,16,23);ctx.fillStyle="#1b1a24";ctx.fillRect(-24,-9,10,16);ctx.fillStyle=m.color;ctx.fillRect(-21,-5,4,8);}else if(m.id==="frost-prism"){ctx.translate(-22,-6);ctx.rotate(state.elapsed*2);ctx.fillRect(-7,-7,14,14);}else{ctx.fillRect(-33,-4,30,8);ctx.beginPath();ctx.arc(-36,0,m.id==="pyre-scepter"?10:7,0,Math.PI*2);ctx.fill();}ctx.restore();
+    if(!artifact.starter){const ax=-38+Math.cos(state.elapsed*2.2)*5,ay=-22+Math.sin(state.elapsed*2.2)*6;ctx.save();ctx.shadowColor=artifact.color;ctx.shadowBlur=23;ctx.fillStyle=artifact.color;ctx.translate(ax,ay);ctx.rotate(state.elapsed*.8);ctx.fillRect(-6,-6,12,12);ctx.strokeStyle=artifact.color;ctx.strokeRect(-11,-11,22,22);ctx.restore();}
+    ctx.restore();
   }
 
   function drawAlly(ally,cam){const p=toScreen(ally.x,ally.y,cam),s=cam.zoom;ctx.save();ctx.translate(p.x,p.y);ctx.rotate(ally.angle);ctx.globalAlpha=.28;ctx.fillStyle="#8e67ff";ctx.beginPath();ctx.arc(0,0,28*s,0,Math.PI*2);ctx.fill();ctx.globalAlpha=.82;ctx.fillStyle=ally.type==="mage"?"#47366f":"#273a57";ctx.fillRect(-13*s,-14*s,26*s,31*s);ctx.fillStyle="#d7d0bd";ctx.fillRect(-11*s,-33*s,22*s,18*s);ctx.fillStyle="#6fc9ff";ctx.shadowBlur=12;ctx.shadowColor="#6fc9ff";ctx.fillRect(-7*s,-28*s,5*s,4*s);ctx.fillRect(2*s,-28*s,5*s,4*s);ctx.fillRect(14*s,-4*s,28*s,5*s);ctx.restore();}
@@ -585,6 +659,8 @@
     state.drops.forEach(drop => { const p = toScreen(drop.x, drop.y - Math.sin(drop.bob) * 5, cam), size = drop.type === "xp" ? 6 : 10; ctx.save(); ctx.shadowBlur = drop.type === "xp" ? 14 : 24; ctx.shadowColor = drop.color; ctx.fillStyle = drop.color; ctx.beginPath(); ctx.moveTo(p.x, p.y - size * cam.zoom); ctx.lineTo(p.x + size * cam.zoom, p.y); ctx.lineTo(p.x, p.y + (size + 2) * cam.zoom); ctx.lineTo(p.x - size * cam.zoom, p.y); ctx.closePath(); ctx.fill(); if (drop.type === "loot" && (drop.rarity === "EPISCH" || drop.rarity === "LEGENDÄR")) { ctx.font = `800 ${Math.max(9, 10 * cam.zoom)}px Georgia`; ctx.textAlign = "center"; ctx.fillText(drop.rarity, p.x, p.y - 20 * cam.zoom); } ctx.restore(); });
     state.bullets.forEach(bullet => { const p = toScreen(bullet.x, bullet.y, cam), color = bullet.color || palette.blue; ctx.save(); ctx.strokeStyle = color; ctx.shadowBlur = bullet.mana ? 22 : 12; ctx.shadowColor = color; ctx.lineWidth = (bullet.mana ? 6 : 3) * cam.zoom; ctx.beginPath(); ctx.moveTo(p.x - bullet.vx * .012 * cam.zoom, p.y - bullet.vy * .012 * cam.zoom); ctx.lineTo(p.x, p.y); ctx.stroke(); ctx.restore(); });
     state.particles.forEach(item => { const p = toScreen(item.x, item.y, cam); ctx.save(); ctx.globalAlpha = item.life / item.maxLife; ctx.fillStyle = item.color; ctx.beginPath(); ctx.arc(p.x, p.y, item.size * cam.zoom, 0, Math.PI * 2); ctx.fill(); ctx.restore(); });
+    state.artifactFx.forEach(fx=>{const p=toScreen(fx.x,fx.y,cam),progress=1-fx.life/fx.maxLife;ctx.save();ctx.globalAlpha=clamp(fx.life/fx.maxLife,0,1);ctx.strokeStyle=fx.color;ctx.fillStyle=fx.color;ctx.shadowColor=fx.color;ctx.shadowBlur=25;ctx.lineWidth=3*cam.zoom;if(fx.type==="arc"){const end=toScreen(fx.tx,fx.ty,cam);ctx.beginPath();ctx.moveTo(p.x,p.y);for(let i=1;i<8;i++){const t=i/8,jitter=(i%2?1:-1)*15*cam.zoom;ctx.lineTo(p.x+(end.x-p.x)*t+jitter,p.y+(end.y-p.y)*t-jitter);}ctx.lineTo(end.x,end.y);ctx.stroke();}else if(fx.type==="ring"){ctx.beginPath();ctx.arc(p.x,p.y,fx.radius*cam.zoom*progress,0,Math.PI*2);ctx.stroke();}else if(fx.type==="vortex"){for(let arm=0;arm<3;arm++){ctx.beginPath();for(let i=0;i<=35;i++){const t=i/35,a=arm*Math.PI*2/3+t*5+state.elapsed*5,r=fx.radius*cam.zoom*t*progress,xx=p.x+Math.cos(a)*r,yy=p.y+Math.sin(a)*r;if(i===0)ctx.moveTo(xx,yy);else ctx.lineTo(xx,yy);}ctx.stroke();}}ctx.restore();});
+    if(state.sentinel){const p=toScreen(state.sentinel.x,state.sentinel.y,cam),s=cam.zoom;ctx.save();ctx.translate(p.x,p.y);ctx.fillStyle="rgba(0,0,0,.4)";ctx.fillRect(-22*s,10*s,44*s,12*s);ctx.fillStyle="#524633";ctx.fillRect(-15*s,-10*s,30*s,28*s);ctx.fillStyle=palette.gold;ctx.shadowColor=palette.gold;ctx.shadowBlur=20;ctx.fillRect(-11*s,-17*s,22*s,11*s);ctx.fillRect(-3*s,-28*s,6*s,11*s);ctx.restore();}
   }
 
   function drawArenaMap() {
@@ -596,37 +672,44 @@
     ctx.strokeStyle = "rgba(123,163,198,.18)"; ctx.lineWidth = 1; for (let gx = 0; gx < world.width; gx += 260) { const p = point({x:gx,y:0}); ctx.beginPath(); ctx.moveTo(p.x,y); ctx.lineTo(p.x,y+height); ctx.stroke(); } for (let gy = 0; gy < world.height; gy += 260) { const p = point({x:0,y:gy}); ctx.beginPath(); ctx.moveTo(x,p.y); ctx.lineTo(x+width,p.y); ctx.stroke(); }
     const keep = world.keep; ctx.fillStyle = "rgba(100,191,162,.2)"; ctx.fillRect(x + keep.x * scale, y + keep.y * scale, keep.w * scale, keep.h * scale); ctx.strokeStyle = "#d3b272"; ctx.lineWidth = 2; ctx.strokeRect(x + keep.x * scale, y + keep.y * scale, keep.w * scale, keep.h * scale);
     state.fences.forEach(fence => { const p = point(fence); ctx.fillStyle = fence.breached ? palette.orange : "#b9814a"; ctx.fillRect(p.x - 2, p.y - 2, 4, 4); });
-    supplyCaches.forEach(cache => { const p = point(cache); ctx.save(); ctx.shadowBlur = 18; ctx.shadowColor = cache.color; ctx.fillStyle = cache.color; ctx.fillRect(p.x - 6, p.y - 6, 12, 12); ctx.globalAlpha = .35; ctx.fillRect(p.x - 2, p.y - 38, 4, 32); ctx.globalAlpha = 1; ctx.font = "800 10px Georgia"; ctx.fillText(cache.rarity, p.x + 10, p.y - 10); ctx.restore(); });
+    supplyCaches.filter(cache=>!cache.opened).forEach(cache => { const p = point(cache); ctx.save(); ctx.shadowBlur = 18; ctx.shadowColor = cache.color; ctx.fillStyle = cache.color; ctx.fillRect(p.x - 6, p.y - 6, 12, 12); ctx.globalAlpha = .35; ctx.fillRect(p.x - 2, p.y - 38, 4, 32); ctx.globalAlpha = 1; ctx.font = "800 10px Georgia"; ctx.fillText(cache.rarity, p.x + 10, p.y - 10); const revealTime=equipped("boots").id==="pathfinder-boots"?100:40;if(cache.landedAt&&state.elapsed-cache.landedAt<revealTime){ctx.fillStyle=palette.white;ctx.fillText("NEU",p.x+10,p.y-23);}if(equipped("helmet").id==="seer-hood"&&["EPISCH","LEGENDÄR","MYTHISCH"].includes(cache.rarity)){ctx.strokeStyle=cache.color;ctx.lineWidth=2;ctx.strokeRect(p.x-10,p.y-10,20,20);}ctx.restore(); });
     state.enemies.forEach(enemy => { const p = point(enemy); ctx.fillStyle = enemy.kind === "breaker" ? palette.orange : palette.red; ctx.beginPath(); ctx.arc(p.x, p.y, enemy.kind === "breaker" ? 6 : 3, 0, Math.PI * 2); ctx.fill(); });
     state.drops.forEach(drop => { const p = point(drop); ctx.fillStyle = drop.color; ctx.shadowBlur = 9; ctx.shadowColor = drop.color; ctx.beginPath(); ctx.arc(p.x, p.y, drop.type === "xp" ? 2 : 5, 0, Math.PI * 2); ctx.fill(); ctx.shadowBlur = 0; if (drop.type === "loot") { ctx.fillStyle = drop.color; ctx.font = "700 9px Georgia"; ctx.fillText(drop.rarity, p.x + 7, p.y - 5); } });
     const artifact = point(world.artifact), hero = point(state.hero); ctx.shadowBlur = 16; ctx.shadowColor = palette.violet; ctx.fillStyle = palette.violet; ctx.beginPath(); ctx.arc(artifact.x, artifact.y, 8, 0, Math.PI * 2); ctx.fill(); ctx.shadowBlur = 12; ctx.shadowColor = palette.blue; ctx.fillStyle = palette.blue; ctx.beginPath(); ctx.arc(hero.x, hero.y, 6, 0, Math.PI * 2); ctx.fill(); ctx.shadowBlur = 0;
-    ctx.fillStyle = "#0b1015"; ctx.fillRect(panelX, y - 10, sideWidth - 12, height + 20); ctx.strokeStyle = "#856c45"; ctx.strokeRect(panelX, y - 10, sideWidth - 12, height + 20); ctx.fillStyle = "#e1c58c"; ctx.font = "900 18px Georgia"; ctx.fillText("ARENAKARTE", x, y - 24); ctx.font = "900 14px Georgia"; ctx.fillText("RIFT INTEL", panelX + 18, y + 28); const legend = [[palette.blue,"HELD"],[palette.violet,"RIFT-ARTEFAKT"],[palette.red,"HORDEN"],["#63aaff","SELTEN"],["#c48cff","EPISCH"],["#ffad46","LEGENDÄR"]]; legend.forEach(([color,label], index) => { const ly = y + 66 + index * 36; ctx.fillStyle = color; ctx.fillRect(panelX + 19, ly - 9, 13, 13); ctx.fillStyle = "#d9d0bd"; ctx.font = "700 11px Georgia"; ctx.fillText(label, panelX + 43, ly + 2); }); ctx.fillStyle = "#7696ae"; ctx.font = "700 10px system-ui"; ctx.fillText(`${state.enemies.length} SIGNALE ERKANNT`, panelX + 18, y + height - 58); ctx.fillText(`${state.drops.filter(drop => drop.type === "loot").length + supplyCaches.length} LOOT-SIGNALE`, panelX + 18, y + height - 38); ctx.fillStyle = "#d5b66d"; ctx.fillText("[M] SCHLIESSEN", panelX + 18, y + height - 16); ctx.restore();
+    ctx.fillStyle = "#0b1015"; ctx.fillRect(panelX, y - 10, sideWidth - 12, height + 20); ctx.strokeStyle = "#856c45"; ctx.strokeRect(panelX, y - 10, sideWidth - 12, height + 20); ctx.fillStyle = "#e1c58c"; ctx.font = "900 18px Georgia"; ctx.fillText("ARENAKARTE", x, y - 24); ctx.font = "900 14px Georgia"; ctx.fillText("RIFT INTEL", panelX + 18, y + 28); const legend = [[palette.blue,"HELD"],[palette.violet,"RIFT-ARTEFAKT"],[palette.red,"HORDEN"],["#63aaff","SELTEN"],["#c48cff","EPISCH"],["#ffad46","LEGENDÄR"]]; legend.forEach(([color,label], index) => { const ly = y + 66 + index * 36; ctx.fillStyle = color; ctx.fillRect(panelX + 19, ly - 9, 13, 13); ctx.fillStyle = "#d9d0bd"; ctx.font = "700 11px Georgia"; ctx.fillText(label, panelX + 43, ly + 2); }); ctx.fillStyle = "#7696ae"; ctx.font = "700 10px system-ui"; ctx.fillText(`${state.enemies.length} SIGNALE ERKANNT`, panelX + 18, y + height - 58); ctx.fillText(`${state.drops.filter(drop => drop.type === "loot").length + supplyCaches.filter(cache=>!cache.opened).length} LOOT-SIGNALE`, panelX + 18, y + height - 38); ctx.fillStyle = "#d5b66d"; ctx.fillText("[M] SCHLIESSEN", panelX + 18, y + height - 16); ctx.restore();
+  }
+
+  function drawMapIntel(){
+    const margin=72,sideWidth=Math.min(250,innerWidth*.22),maxW=innerWidth-margin*2-sideWidth,maxH=innerHeight-margin*2,scale=Math.min(maxW/world.width,maxH/world.height),width=world.width*scale,height=world.height*scale,x=(innerWidth-sideWidth-width)/2,y=(innerHeight-height)/2,panelX=x+width+18;
+    if(height<420)return;ctx.save();ctx.fillStyle="#0b1015";ctx.fillRect(panelX+6,y+278,sideWidth-24,height-358);ctx.fillStyle=palette.gold;ctx.font="900 11px system-ui";ctx.fillText("OFFENE LOOTDROPS",panelX+18,y+301);
+    const visible=supplyCaches.filter(cache=>!cache.opened).sort((a,b)=>(b.landedAt||0)-(a.landedAt||0)).slice(0,Math.max(2,Math.floor((height-370)/47)));
+    visible.forEach((cache,index)=>{const yy=y+330+index*47,guardians=state.enemies.filter(enemy=>enemy.cacheId===cache.id).length;ctx.fillStyle=cache.color;ctx.fillRect(panelX+18,yy-11,9,9);ctx.font="800 10px system-ui";ctx.fillText(`${cache.rarity} · ${cache.reward?.slot?labels[cache.reward.slot]:"MATERIAL"}`,panelX+34,yy-2);ctx.fillStyle="#9fb1b9";ctx.font="10px system-ui";ctx.fillText(`${guardians} WÄCHTER${cache.landedAt&&state.elapsed-cache.landedAt<(equipped("boots").id==="pathfinder-boots"?100:40)?" · GERADE GELANDET":""}`,panelX+34,yy+15);});ctx.restore();
   }
 
   function render() {
     const cam = camera(); drawBackground(cam); drawKeep(cam); state.allies.forEach(ally=>drawAlly(ally,cam)); state.enemies.forEach(enemy => drawEnemy(enemy, cam)); drawEffects(cam); if (state.hero) drawHero(state.hero, cam);
     if (state.mode === "playing" && state.bannerTimer > 0) { ctx.save(); ctx.globalAlpha = clamp(state.bannerTimer, 0, 1); ctx.textAlign = "center"; ctx.fillStyle = palette.white; ctx.font = `900 ${Math.max(24, 33 * cam.zoom)}px system-ui`; ctx.fillText(`WELLE ${state.wave}`, innerWidth / 2, innerHeight * .21); ctx.fillStyle = palette.orange; ctx.font = `800 ${Math.max(10, 12 * cam.zoom)}px system-ui`; ctx.fillText(state.wave % 3 === 0 ? "BOSS-BELAGERUNG" : "DIE HORDE KOMMT", innerWidth / 2, innerHeight * .21 + 25 * cam.zoom); ctx.restore(); }
-    if (state.mapOpen && state.hero) drawArenaMap();
+    if (state.mapOpen && state.hero) {drawArenaMap();drawMapIntel();}
   }
 
   function loop(time) { const dt = Math.min(.033, (time - previousTime) / 1000); previousTime = time; update(dt); render(); requestAnimationFrame(loop); }
   function resize() { const dpr = Math.min(2, devicePixelRatio || 1); canvas.width = Math.round(innerWidth * dpr); canvas.height = Math.round(innerHeight * dpr); canvas.style.width = `${innerWidth}px`; canvas.style.height = `${innerHeight}px`; ctx.setTransform(dpr, 0, 0, dpr, 0, 0); }
-  function play() { reset(); state.mode = "playing"; ui.start.classList.add("hidden"); ui.help.classList.add("hidden"); ui.over.classList.add("hidden"); closePanels(); ui.lootReveal.classList.add("hidden"); ui.hud.classList.remove("hidden"); previousTime = performance.now(); updateCaches(); updateUi(); }
+  function play(admin=false) { reset(admin); state.mode = "playing"; ui.start.classList.add("hidden"); ui.help.classList.add("hidden"); ui.over.classList.add("hidden"); closePanels(); ui.lootReveal.classList.add("hidden"); ui.hud.classList.remove("hidden"); previousTime = performance.now(); updateCaches(); updateUi(); if(admin)showToast("ADMIN-SANDBOX · 42 / 42 ITEMS FREIGESCHALTET"); }
   function menu() { state.mode = "menu"; state.mapOpen = false; state.lootOpen = false; closePanels(); ui.lootReveal.classList.add("hidden"); ui.hud.classList.add("hidden"); ui.over.classList.add("hidden"); ui.help.classList.add("hidden"); ui.start.classList.remove("hidden"); }
 
-  document.querySelector("#play").addEventListener("click", play); document.querySelector("#startFromHelp").addEventListener("click", play); document.querySelector("#restart").addEventListener("click", play); document.querySelector("#menu").addEventListener("click", menu);
+  document.querySelector("#play").addEventListener("click", () => play(false)); document.querySelector("#admin-play").addEventListener("click", () => play(true)); document.querySelector("#startFromHelp").addEventListener("click", () => play(false)); document.querySelector("#restart").addEventListener("click", () => play(state.admin)); document.querySelector("#menu").addEventListener("click", menu);
   document.querySelector("#help").addEventListener("click", () => { ui.start.classList.add("hidden"); ui.help.classList.remove("hidden"); }); document.querySelector("[data-close]").addEventListener("click", () => { ui.help.classList.add("hidden"); ui.start.classList.remove("hidden"); });
   document.querySelector("#loadout").addEventListener("click", openLoadout); document.querySelector("#close-loadout").addEventListener("click", closeLoadout); document.querySelector("#loadout-back").addEventListener("click", closeLoadout);
-  ui.loadoutGrid.addEventListener("click", event => { const button = event.target.closest("[data-slot]"); if (!button) return; const slot = button.dataset.slot, options = gearSlots[slot].options; state.equipment[slot] = (state.equipment[slot] + 1) % options.length; applyStats(); renderLoadout(); });
+  ui.loadoutGrid.addEventListener("click", event => { const button = event.target.closest("[data-slot]"); if (!button) return; const slot = button.dataset.slot, options = gearSlots[slot].options; let next=state.equipment[slot];do{next=(next+1)%options.length;}while(next!==state.equipment[slot]&&!owns(options[next]));if(next===state.equipment[slot]){showToast("NOCH KEINE WEITEREN TEILE GEFUNDEN");return;}state.equipment[slot]=next;state.artifactTimer=1;applyStats();renderLoadout();renderInventory();showToast(`${options[next].name.toUpperCase()} AUSGERÜSTET`); });
   document.querySelector("#inventory").addEventListener("click", openInventory); document.querySelector("#close-inventory").addEventListener("click", closeInventory); document.querySelector("#inventory-back").addEventListener("click", closeInventory);
   ui.inventoryTabs.addEventListener("click", event => { const button = event.target.closest("[data-filter]"); if (!button) return; state.inventoryFilter = button.dataset.filter; ui.inventoryTabs.querySelectorAll("button").forEach(tab => tab.classList.toggle("active", tab === button)); renderInventory(); });
   ui.inventoryGrid.addEventListener("click", event => { const button = event.target.closest("[data-item-id]"); if (!button) return; state.selectedInventory = Number(button.dataset.itemId); renderInventory(); });
-  ui.inventoryDetail.addEventListener("click", event => { const equip = event.target.closest("[data-equip-slot]"), upgrade = event.target.closest("[data-soul-upgrade]"); if (equip) { state.equipment[equip.dataset.equipSlot] = Number(equip.dataset.equipIndex); applyStats(); renderLoadout(); renderInventory(); showToast("GEGENSTAND AUSGERÜSTET"); } else if (upgrade) soulUpgrade(upgrade.dataset.soulUpgrade); });
+  ui.inventoryDetail.addEventListener("click", event => { const equip = event.target.closest("[data-equip-slot]"), upgrade = event.target.closest("[data-soul-upgrade]"); if (equip) { const option=gearSlots[equip.dataset.equipSlot]?.options[Number(equip.dataset.equipIndex)];if(!option||!owns(option))return;state.equipment[equip.dataset.equipSlot]=Number(equip.dataset.equipIndex);state.artifactTimer=1;applyStats();renderLoadout();renderInventory();showToast(`${option.name.toUpperCase()} AUSGERÜSTET`); } else if (upgrade) soulUpgrade(upgrade.dataset.soulUpgrade); });
   document.querySelector("#enchant").addEventListener("click", openEnchant); document.querySelector("#close-enchant").addEventListener("click", closeEnchant); document.querySelector("#enchant-back").addEventListener("click", closeEnchant); ui.enchantGrid.addEventListener("click", event => { const button = event.target.closest("[data-enchant-id]"); if (button) applyEnchant(button.dataset.enchantId); }); document.querySelector("#loot-continue").addEventListener("click", closeLootReveal);
   canvas.addEventListener("pointermove", event => { pointer.x = event.clientX; pointer.y = event.clientY; }); canvas.addEventListener("pointerdown", event => { pointer.down = true; pointer.x = event.clientX; pointer.y = event.clientY; }); window.addEventListener("pointerup", () => pointer.down = false);
   window.addEventListener("keydown", event => {
     keys[event.key] = true; if ([" ", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(event.key)) event.preventDefault(); if (event.repeat) return;
-    const key = event.key.toLowerCase(); if (key === "q") dash(); if (key === "r") repairFence(); if (key === "f") fireManaWeapon(); if (key === "e") interactCache(); if (key === "g") summonSouls();
+    const key = event.key.toLowerCase(); if (key === "q") dash(); if (key === "r") repairFence(); if (key === "u") upgradeFence(); if (key === "b") expandBase(); if (key === "f") fireManaWeapon(); if (key === "e") interactCache(); if (key === "g") summonSouls();
     if (key === "m" && state.mode === "playing" && !state.loadoutOpen && !state.inventoryOpen && !state.enchantOpen && !state.lootOpen) { state.mapOpen = !state.mapOpen; pointer.down = false; showToast(state.mapOpen ? "ARENAKARTE — LOOT-RARITÄTEN SICHTBAR" : "ARENAKARTE GESCHLOSSEN"); }
     if (key === "c" && state.mode === "playing" && !state.mapOpen && !state.inventoryOpen && !state.enchantOpen) { if (state.loadoutOpen) closeLoadout(); else openLoadout(); }
     if (key === "i" && state.mode === "playing" && !state.mapOpen && !state.loadoutOpen && !state.enchantOpen) { if (state.inventoryOpen) closeInventory(); else openInventory(); }

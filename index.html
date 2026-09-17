@@ -4,10 +4,11 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#08131b">
-    <meta name="description" content="LAST FENCE – spielbare Fortress-Beta mit Loot, Seelen und Verzauberungen">
-    <title>LAST FENCE — Fortress Beta 0.7</title>
-    <link rel="stylesheet" href="beta.css?v=0.7.0">
-    <link rel="stylesheet" href="fortress-v07.css?v=0.7.0">
+    <meta name="description" content="LAST FENCE – spielbare 2D Browser-Mini-Version mit 42 Ausrüstungsteilen, Bossen, Loot und Festungsverteidigung">
+    <title>LAST FENCE — 2D Mini</title>
+    <link rel="stylesheet" href="beta.css?v=0.8.0">
+    <link rel="stylesheet" href="fortress-v07.css?v=0.8.0">
+    <link rel="stylesheet" href="mini.css?v=0.8.0">
   </head>
   <body>
     <canvas id="game" aria-label="LAST FENCE Spielarena"></canvas>
@@ -15,12 +16,13 @@
     <main id="ui">
       <section id="start" class="panel start-panel">
         <div class="brand-sigil" aria-hidden="true">✦</div>
-        <p class="kicker">RIFT-BORN SURVIVAL · FORTRESS BETA 0.7</p>
+        <p class="kicker">RIFT-BORN SURVIVAL · 2D BROWSER MINI</p>
         <h1>LAST <em>FENCE</em></h1>
-        <p class="intro">Halte die Linie. Öffne bewachte Rift-Kisten. Verzaubere deine Waffen und entscheide, wofür du die Seelen der Gefallenen einsetzt.</p>
-        <div class="menu-features"><span>RIESIGE ARENA</span><span>BEWACHTER LOOT</span><span>SOUL BUILDS</span><span>ENCHANTS</span></div>
+        <p class="intro">Halte die Linie, besiege The Breaker und sammle 42 Waffen, Mana-Waffen, Rüstungsteile und Artefakte aus bewachten Lootdrops.</p>
+        <div class="menu-features"><span>42 ITEMS</span><span>BEWACHTER LOOT</span><span>6 MANA-WAFFEN</span><span>ARTEFAKT-KRÄFTE</span></div>
         <div class="main-menu-actions">
-          <button id="play" class="primary">RUN STARTEN <span>→</span></button>
+          <button id="play" class="primary">NORMALER RUN · LOOT FINDEN <span>→</span></button>
+          <button id="admin-play" class="secondary admin-button">ADMIN-SANDBOX · ALLES FREI <span>✦</span></button>
           <button id="loadout" class="secondary">CHARAKTER &amp; AUSRÜSTUNG <span>◈</span></button>
           <button id="inventory" class="secondary">ARSENAL &amp; INVENTAR <span>▦</span></button>
           <button id="enchant" class="secondary">VERZAUBERUNGS-SCHMIEDE <span>✦</span></button>
@@ -42,6 +44,8 @@
           <div><dt>G</dt><dd>Seelen beschwören (nur Nekromanten-Artefakt)</dd></div>
           <div><dt>Q</dt><dd>Ausweichen</dd></div>
           <div><dt>R</dt><dd>Nahen Zaun reparieren (10 Schrott)</dd></div>
+          <div><dt>U</dt><dd>Nahen Zaun mit Schrott verstärken</dd></div>
+          <div><dt>B</dt><dd>Zaunring und Basis erweitern</dd></div>
           <div><dt>M</dt><dd>Arenakarte und Loot-Raritäten</dd></div>
           <div><dt>I</dt><dd>Inventar und eingesammelte Beute</dd></div>
           <div><dt>C</dt><dd>Ausrüstung im Lauf anpassen</dd></div>
@@ -67,7 +71,7 @@
         <p class="kicker">RIFT VAULT · GESAMMELTE BEUTE</p>
         <h2>INVENTORY</h2>
         <div id="inventory-tabs" class="inventory-tabs">
-          <button data-filter="ALL" class="active">ALL</button><button data-filter="WEAPONS">WEAPONS</button><button data-filter="ARMOR">ARMOR</button><button data-filter="ARTIFACTS">ARTIFACTS</button><button data-filter="MATERIALS">MATERIALS</button><button data-filter="SOULS">SOULS</button>
+          <button data-filter="ALL" class="active">ALLE</button><button data-filter="CATALOG">KATALOG 0/42</button><button data-filter="WEAPONS">WAFFEN</button><button data-filter="ARMOR">RÜSTUNG</button><button data-filter="ARTIFACTS">ARTEFAKTE</button><button data-filter="MATERIALS">MATERIAL</button>
         </div>
         <div class="vault-summary"><span>SEELEN <b id="vault-souls">0</b></span><span>SCHROTT <b id="vault-scrap">0</b></span><span>RIFTSTAUB <b id="vault-dust">0</b></span></div>
         <div class="inventory-content"><div id="inventory-grid" class="inventory-grid"></div><aside id="inventory-detail" class="inventory-detail"></aside></div>
@@ -115,10 +119,12 @@
         <div class="card resources"><span>SEELEN <b id="souls">0</b></span><span>SCHROTT <b id="scrap">0</b></span><span>RIFTSTAUB <b id="dust">0</b></span><small>F Mana · E Loot · G Seelen · M Karte · I Inventar</small></div>
         <div class="card fence-card"><span>NÄCHSTER ZAUN</span><b id="fenceHealth">100 / 100</b><div class="meter fence"><i id="fenceMeter"></i></div><small id="fenceStatus">INTAKT</small></div>
         <div class="card weapon-card"><span>PRIMÄRWAFFE</span><b id="activeWeapon">ARC REAPER</b><small id="activeEnchant">UNVERZAUBERT</small><span>MANA-WAFFE</span><b id="activeManaWeapon">BLAUER STAB</b><small id="manaCost">F · 26 MANA</small></div>
+        <div class="card artifact-card"><span>ARTEFAKT</span><b id="activeArtifact">LEERER SOCKEL</b><small id="artifactStatus">IN LOOTDROPS FINDEN</small><small id="catalogueCount">KATALOG 0 / 42</small></div>
         <div id="interaction" class="interaction hidden">E · LOOT ÖFFNEN</div>
         <div id="toast"></div>
       </section>
     </main>
-    <script src="beta.js?v=0.7.0"></script>
+    <script src="catalog.js?v=0.8.0"></script>
+    <script src="beta.js?v=0.8.0"></script>
   </body>
 </html>
