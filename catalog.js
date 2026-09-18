@@ -4,10 +4,10 @@
   const C = { blue:"#66beff", cyan:"#77e5ff", orange:"#ff914d", violet:"#b591ff", gold:"#f4c46b", pink:"#ff69cc", green:"#78dfa8", iron:"#a5b3b7" };
   const make = (slot,id,name,rarity,color,power,stats={}) => ({slot,id,name,rarity:R[rarity],color:C[color],power,description:power,stats:power,category:slot==="weapon"||slot==="manaWeapon"?"WEAPONS":slot==="artifact"?"ARTIFACTS":"ARMOR",...stats});
   const items = [
-    make("weapon","arc-reaper","Arc Reaper","Legendär","blue","Rift-Schnitt: jeder dritte Schuss erzeugt eine stärkere Energiewelle.",{damage:42}),
+    make("weapon","arc-reaper","Arc Reaper","Legendär","blue","Rift-Schnitt: jeder dritte Schwerthieb trifft besonders hart.",{damage:42}),
     make("weapon","emberforge-maul","Emberforge Maul","Episch","orange","Aschekrater: wuchtige Treffer entzünden Gegner im Umkreis.",{damage:58}),
     make("weapon","thunderbolt-rifle","Thunderbolt Rifle","Selten","cyan","Leitblitz: die schnelle Salve springt auf ein weiteres Ziel.",{damage:34,crit:.06}),
-    make("weapon","voidfang-twins","Twin Voidfangs","Mythisch","pink","Phasenschritt: blitzschnelle Doppelschüsse und verkürzter Dash.",{damage:24,speed:.08,crit:.18}),
+    make("weapon","voidfang-twins","Twin Voidfangs","Mythisch","pink","Phasenschritt: blitzschnelle Doppelklingen-Hiebe und verkürzter Dash.",{damage:24,speed:.08,crit:.18}),
     make("weapon","glacier-breaker","Glacier Breaker","Legendär","cyan","Permafrost: Eisnova verlangsamt alle getroffenen Gegner.",{damage:64}),
     make("weapon","gravecaller-staff","Gravecaller Staff","Legendär","violet","Seelenernte: gefallene Gegner heilen dich und geben mehr Seelen.",{damage:39,mana:20}),
     make("manaWeapon","riftweaver-wand","Riftweaver Wand","Selten","blue","Suchfunke: ein Riftstern sucht selbstständig das nächste Ziel.",{damage:78,cost:18}),
@@ -40,15 +40,15 @@
     make("helmet","frost-crown","Crown of Winter","Legendär","cyan","Winterblick: kritische Treffer setzen Frost frei.",{mana:20,crit:.10}),
     make("helmet","soul-mask","Mask of Echoes","Legendär","violet","Seelenecho: jede fünfte gefangene Seele zählt doppelt.",{armor:18,mana:35}),
     make("helmet","rift-king-crown","Rift King's Crown","Mythisch","pink","Riftbefehl: Elitegegner verursachen weniger Schaden.",{armor:30,crit:.15}),
-    make("artifact","fencers-sigil","Fencer's Sigil","Selten","blue","Phantomklinge: ein Geisterschwert schlägt selbstständig zu."),
-    make("artifact","storm-core","Storm Core","Episch","cyan","Himmelsurteil: ein autonomer Blitz springt zum nächsten Gegner."),
+    make("artifact","fencers-sigil","Fencer's Sigil","Selten","blue","Phantomklinge: auf Tastendruck schlägt ein Geisterschwert zu."),
+    make("artifact","storm-core","Storm Core","Episch","cyan","Himmelsurteil: auf Tastendruck springt ein Blitz zwischen Gegnern."),
     make("artifact","sun-core","Sun Core","Legendär","orange","Sonnenhalo: eine große brennende Lichtwelle entsteht um dich."),
     make("artifact","wind-crystal","Wind Crystal","Episch","green","Riftzyklon: ein Wirbel zieht nahe Gegner zusammen."),
     make("artifact","warden-totem","Warden's Totem","Legendär","gold","Geisterwache: ein Runengeschütz schießt selbstständig."),
-    make("artifact","necromancer-sigil","Nekromanten-Siegel","Mythisch","violet","Totenruf: nur dieses Artefakt beschwört Seelen mit G.",{mana:40})
+    make("artifact","necromancer-sigil","Nekromanten-Siegel","Mythisch","violet","Totenruf: nur dieses Artefakt beschwört Seelen mit der Slot-Taste oder G.",{mana:40})
   ];
   const starters = {
-    weapon:make("weapon","starter-blade","Rekrutenklinge","Gewöhnlich","iron","Einfacher Rift-Schuss.",{damage:22,starter:true}),
+    weapon:make("weapon","starter-blade","Rekrutenklinge","Gewöhnlich","iron","Einfacher Schwerthieb aus kurzer Distanz.",{damage:22,starter:true}),
     manaWeapon:make("manaWeapon","starter-wand","Lehrlingsstab","Gewöhnlich","blue","Übungsfunke mit Manakosten.",{damage:48,cost:16,starter:true}),
     boots:make("boots","starter-boots","Rekrutenstiefel","Gewöhnlich","iron","Solide Anfänger-Ausrüstung.",{speed:.02,starter:true}),
     pants:make("pants","starter-pants","Rekrutenhose","Gewöhnlich","iron","Solide Anfänger-Ausrüstung.",{armor:3,starter:true}),

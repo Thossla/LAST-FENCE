@@ -4,11 +4,11 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#08131b">
-    <meta name="description" content="LAST FENCE – spielbare 2D Browser-Mini-Version mit 42 Ausrüstungsteilen, Bossen, Loot und Festungsverteidigung">
-    <title>LAST FENCE — 2D Mini</title>
-    <link rel="stylesheet" href="beta.css?v=0.8.0">
-    <link rel="stylesheet" href="fortress-v07.css?v=0.8.0">
-    <link rel="stylesheet" href="mini.css?v=0.8.0">
+    <meta name="description" content="LAST FENCE – spielbares 2,5D-Browserspiel mit 42 Ausrüstungsteilen, aktiven Artefakten, Magie und Festungsverteidigung">
+    <title>LAST FENCE — 2,5D Browser Beta</title>
+    <link rel="stylesheet" href="beta.css?v=0.9.0">
+    <link rel="stylesheet" href="fortress-v07.css?v=0.9.0">
+    <link rel="stylesheet" href="mini.css?v=0.9.0">
   </head>
   <body>
     <canvas id="game" aria-label="LAST FENCE Spielarena"></canvas>
@@ -16,15 +16,15 @@
     <main id="ui">
       <section id="start" class="panel start-panel">
         <div class="brand-sigil" aria-hidden="true">✦</div>
-        <p class="kicker">RIFT-BORN SURVIVAL · 2D BROWSER MINI</p>
+        <p class="kicker">RIFT-BORN SURVIVAL · 2,5D BROWSER BETA</p>
         <h1>LAST <em>FENCE</em></h1>
         <p class="intro">Halte die Linie, besiege The Breaker und sammle 42 Waffen, Mana-Waffen, Rüstungsteile und Artefakte aus bewachten Lootdrops.</p>
-        <div class="menu-features"><span>42 ITEMS</span><span>BEWACHTER LOOT</span><span>6 MANA-WAFFEN</span><span>ARTEFAKT-KRÄFTE</span></div>
+        <div class="menu-features"><span>42 ITEM-PORTRÄTS</span><span>BEWACHTER LOOT</span><span>WAFFENWECHSEL</span><span>3 AKTIVE ARTEFAKTE</span></div>
         <div class="main-menu-actions">
           <button id="play" class="primary">NORMALER RUN · LOOT FINDEN <span>→</span></button>
           <button id="admin-play" class="secondary admin-button">ADMIN-SANDBOX · ALLES FREI <span>✦</span></button>
-          <button id="loadout" class="secondary">CHARAKTER &amp; AUSRÜSTUNG <span>◈</span></button>
-          <button id="inventory" class="secondary">ARSENAL &amp; INVENTAR <span>▦</span></button>
+          <button id="loadout" class="secondary">CHARAKTER &amp; INVENTAR <span>◈</span></button>
+          <button id="inventory" class="secondary">AUSRÜSTUNG ANSEHEN <span>▦</span></button>
           <button id="enchant" class="secondary">VERZAUBERUNGS-SCHMIEDE <span>✦</span></button>
           <button id="help" class="secondary">STEUERUNG <span>?</span></button>
         </div>
@@ -38,52 +38,48 @@
         <p>Das Rift-Artefakt in der Mitte hält dich am Leben: Nach jedem Tod wirst du dort wiederbelebt. Game Over gibt es erst, wenn Gegner das Artefakt zerstören. Dafür müssen sie zuvor ein Zaunsegment niederreißen und durch die Bresche dringen.</p>
         <dl>
           <div><dt>WASD / PFEILE</dt><dd>Bewegen</dd></div>
-          <div><dt>MAUS + KLICK / LEERTASTE</dt><dd>Zielen und feuern</dd></div>
-          <div><dt>F</dt><dd>Ausgerüstete Mana-Waffe einsetzen</dd></div>
+          <div><dt>MAUS + KLICK / LEERTASTE</dt><dd>Mit der aktiven Waffe angreifen</dd></div>
+          <div><dt>F</dt><dd>Zwischen Primär- und Mana-Waffe wechseln</dd></div>
+          <div><dt>1 / 2 / 3</dt><dd>Artefakt-Slots aktivieren</dd></div>
           <div><dt>E</dt><dd>Bewachte Loot-Kiste öffnen</dd></div>
-          <div><dt>G</dt><dd>Seelen beschwören (nur Nekromanten-Artefakt)</dd></div>
+          <div><dt>G</dt><dd>Kurztaste für das ausgerüstete Nekromanten-Siegel</dd></div>
           <div><dt>Q</dt><dd>Ausweichen</dd></div>
           <div><dt>R</dt><dd>Nahen Zaun reparieren (10 Schrott)</dd></div>
           <div><dt>U</dt><dd>Nahen Zaun mit Schrott verstärken</dd></div>
           <div><dt>B</dt><dd>Zaunring und Basis erweitern</dd></div>
           <div><dt>M</dt><dd>Arenakarte und Loot-Raritäten</dd></div>
-          <div><dt>I</dt><dd>Inventar und eingesammelte Beute</dd></div>
-          <div><dt>C</dt><dd>Ausrüstung im Lauf anpassen</dd></div>
+          <div><dt>I / C</dt><dd>Gemeinsames Charakter- und Inventarmenü</dd></div>
         </dl>
         <button id="startFromHelp" class="primary">LINIE HALTEN <span>→</span></button>
       </section>
 
-      <section id="loadout-screen" class="panel modal hidden">
+      <section id="loadout-screen" class="panel arsenal-panel hidden">
         <button class="close" id="close-loadout" aria-label="Schließen">×</button>
-        <p class="kicker">RIFT-ARSENAL</p>
-        <h2>CHARAKTER ANPASSEN</h2>
-        <p>Stelle deinen Wächter zusammen. Das Nekromanten-Artefakt schaltet Beschwörungen frei; ohne dieses Artefakt werden Seelen für Waffen- und Rüstungs-Upgrades verwendet.</p>
-        <div class="character-layout">
-          <div id="loadout-grid" class="loadout-grid"></div>
-          <div class="character-stage" aria-hidden="true"><div class="character-aura"></div><div class="character-model"><i class="helm"></i><i class="body"></i><i class="arm left"></i><i class="arm right"></i><i class="leg left"></i><i class="leg right"></i><i class="blade"></i></div><span>RIFT WARDEN</span></div>
-          <aside><p class="kicker">LIVE COMBAT VALUES</p><div id="loadout-stats" class="loadout-stats"></div></aside>
+        <p class="kicker">RIFT-ARSENAL · CHARAKTER UND INVENTAR</p>
+        <h2>DEIN WÄCHTER</h2>
+        <p>Ziehe ein gefundenes Item rechts auf den passenden Slot links. Ziehe einen Slot zurück ins Inventar, um ihn abzulegen. Drei Artefakte kannst du im Spiel mit 1, 2 und 3 einsetzen.</p>
+        <div class="arsenal-layout">
+          <div class="arsenal-character">
+            <div class="avatar-stage"><canvas id="avatar-preview" width="300" height="340" aria-label="Aktueller Wächter mit ausgerüsteten Gegenständen"></canvas><span>SPIELFIGUR · LIVE-ANSICHT</span></div>
+            <div id="loadout-grid" class="loadout-grid"></div>
+            <div id="loadout-stats" class="loadout-stats"></div>
+          </div>
+          <div class="arsenal-vault">
+            <div id="inventory-tabs" class="inventory-tabs"><button data-filter="ALL" class="active">ALLE</button><button data-filter="CATALOG">KATALOG 0/42</button><button data-filter="WEAPONS">WAFFEN</button><button data-filter="ARMOR">RÜSTUNG</button><button data-filter="ARTIFACTS">ARTEFAKTE</button><button data-filter="MATERIALS">MATERIAL</button></div>
+            <div class="vault-summary"><span>SEELEN <b id="vault-souls">0</b></span><span>SCHROTT <b id="vault-scrap">0</b></span><span>RIFTSTAUB <b id="vault-dust">0</b></span></div>
+            <div id="inventory-grid" class="inventory-grid"></div>
+            <aside id="inventory-detail" class="inventory-detail"></aside>
+          </div>
         </div>
         <button id="loadout-back" class="primary">BEREIT <span>→</span></button>
       </section>
 
-      <section id="inventory-screen" class="panel inventory-panel hidden">
-        <button class="close" id="close-inventory" aria-label="Schließen">×</button>
-        <p class="kicker">RIFT VAULT · GESAMMELTE BEUTE</p>
-        <h2>INVENTORY</h2>
-        <div id="inventory-tabs" class="inventory-tabs">
-          <button data-filter="ALL" class="active">ALLE</button><button data-filter="CATALOG">KATALOG 0/42</button><button data-filter="WEAPONS">WAFFEN</button><button data-filter="ARMOR">RÜSTUNG</button><button data-filter="ARTIFACTS">ARTEFAKTE</button><button data-filter="MATERIALS">MATERIAL</button>
-        </div>
-        <div class="vault-summary"><span>SEELEN <b id="vault-souls">0</b></span><span>SCHROTT <b id="vault-scrap">0</b></span><span>RIFTSTAUB <b id="vault-dust">0</b></span></div>
-        <div class="inventory-content"><div id="inventory-grid" class="inventory-grid"></div><aside id="inventory-detail" class="inventory-detail"></aside></div>
-        <button id="inventory-back" class="primary">ZURÜCK <span>←</span></button>
-      </section>
-
       <section id="enchant-screen" class="panel enchant-panel hidden">
         <button class="close" id="close-enchant" aria-label="Schließen">×</button>
-        <p class="kicker">RIFT FORGE · AKTIVES WAFFENRITUAL</p>
+        <p class="kicker">RIFT FORGE · SEELENVERZAUBERUNG</p>
         <h2>VERZAUBERUNG</h2>
-        <p>Wähle eine Rune für deine Primärwaffe. Jede Verzauberung verändert Treffer und Kampfstil sofort.</p>
-        <div class="enchant-layout"><div id="enchant-weapon" class="enchant-weapon"></div><div id="enchant-grid" class="enchant-grid"></div></div>
+        <p>Ziehe eine Waffe aus der Liste in den Schmiede-Slot. Drei passende Verzauberungen stehen bereit und kosten eingesammelte Seelen.</p>
+        <div class="enchant-workbench"><div id="enchant-inventory" class="enchant-source"></div><div class="enchant-layout"><div id="enchant-weapon" class="enchant-weapon" aria-label="Waffe zum Verzaubern hier ablegen"></div><div id="enchant-grid" class="enchant-grid"></div></div></div>
         <button id="enchant-back" class="primary">ZURÜCK <span>←</span></button>
       </section>
 
@@ -116,15 +112,16 @@
           <div class="meter base"><i id="keepMeter"></i></div>
         </div>
         <div class="card wave-card"><span>WELLE <b id="wave">1</b></span><strong id="objective">BELAGERUNG BEGINNT</strong><small id="enemyCount">0 Gegner</small><div class="xp-line"><span>LVL <b id="levelValue">1</b></span><div class="meter xp"><i id="xpMeter"></i></div><small id="xpValue">0 / 100 XP</small></div></div>
-        <div class="card resources"><span>SEELEN <b id="souls">0</b></span><span>SCHROTT <b id="scrap">0</b></span><span>RIFTSTAUB <b id="dust">0</b></span><small>F Mana · E Loot · G Seelen · M Karte · I Inventar</small></div>
+        <div class="card resources"><span>SEELEN <b id="souls">0</b></span><span>SCHROTT <b id="scrap">0</b></span><span>RIFTSTAUB <b id="dust">0</b></span><small>F Waffe · 1–3 Artefakte · E Loot · M Karte · I Inventar</small></div>
         <div class="card fence-card"><span>NÄCHSTER ZAUN</span><b id="fenceHealth">100 / 100</b><div class="meter fence"><i id="fenceMeter"></i></div><small id="fenceStatus">INTAKT</small></div>
-        <div class="card weapon-card"><span>PRIMÄRWAFFE</span><b id="activeWeapon">ARC REAPER</b><small id="activeEnchant">UNVERZAUBERT</small><span>MANA-WAFFE</span><b id="activeManaWeapon">BLAUER STAB</b><small id="manaCost">F · 26 MANA</small></div>
-        <div class="card artifact-card"><span>ARTEFAKT</span><b id="activeArtifact">LEERER SOCKEL</b><small id="artifactStatus">IN LOOTDROPS FINDEN</small><small id="catalogueCount">KATALOG 0 / 42</small></div>
+        <div class="card weapon-card"><span id="attackModeLabel">AKTIV · PRIMÄRWAFFE</span><b id="activeWeapon">REKRUTENKLINGE</b><small id="activeEnchant">UNVERZAUBERT</small><span>MANA-WAFFE</span><b id="activeManaWeapon">LEHRLINGSSTAB</b><small id="manaCost">F WECHSELN · KLICK ANGRIFF</small></div>
+        <div class="card artifact-card"><span>AKTIVE ARTEFAKTE</span><b id="activeArtifact">1 LEER · 2 LEER · 3 LEER</b><small id="artifactStatus">MIT 1 / 2 / 3 AUSLÖSEN</small><small id="catalogueCount">KATALOG 0 / 42</small></div>
         <div id="interaction" class="interaction hidden">E · LOOT ÖFFNEN</div>
         <div id="toast"></div>
       </section>
     </main>
-    <script src="catalog.js?v=0.8.0"></script>
-    <script src="beta.js?v=0.8.0"></script>
+    <script src="catalog.js?v=0.9.0"></script>
+    <script src="gear-art.js?v=0.9.0"></script>
+    <script src="beta.js?v=0.9.0"></script>
   </body>
 </html>

@@ -18,3 +18,28 @@
 .weapon-card{bottom:28px}
 @media(max-width:1000px){.artifact-card{right:12px;bottom:12px;max-width:180px;min-width:170px}.artifact-card b{font-size:11px}.fence-card{bottom:24px}.weapon-card{display:none}}
 @media(max-width:680px){.start-panel{left:12px;width:calc(100vw - 24px);padding:27px 21px 20px}.start-panel h1{font-size:clamp(49px,12vw,76px)}.main-menu-actions{grid-template-columns:1fr}.main-menu-actions .admin-button{grid-column:auto}.artifact-card{display:none}.character-stage{min-height:280px}.character-model{transform:scale(.7)}.loadout-grid{max-height:300px}}
+
+/* 2.5D arsenal: the preview is drawn by the exact same canvas model as the hero. */
+#loadout-screen.arsenal-panel{width:min(1500px,calc(100vw - 28px));max-height:calc(100vh - 24px);overflow:auto;padding:28px 32px;text-align:left}
+.arsenal-panel>p:not(.kicker){max-width:980px;color:#8eabb8;font-size:12px;line-height:1.5}
+.arsenal-layout{display:grid;grid-template-columns:minmax(400px,.95fr) minmax(460px,1.15fr);gap:16px;margin-top:16px}
+.arsenal-character,.arsenal-vault{min-width:0;padding:13px;border:1px solid #36556a;background:linear-gradient(145deg,#0e1d28,#070f17)}
+.avatar-stage{position:relative;display:grid;place-items:center;height:270px;border:1px solid #365a73;background:radial-gradient(circle at center,#25415a,#07121a 70%);overflow:hidden}
+.avatar-stage canvas{width:260px;height:250px;object-fit:contain;filter:drop-shadow(0 13px 18px #0009)}
+.avatar-stage span{position:absolute;bottom:8px;color:#72bff1;font:800 9px Georgia;letter-spacing:.17em}
+.arsenal-panel .loadout-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin:10px 0;max-height:none;overflow:visible}
+.arsenal-panel .loadout-slot{display:flex;align-items:center;gap:7px;min-width:0;min-height:68px;padding:5px;text-align:left;border:1px solid color-mix(in srgb,var(--slot-color) 60%,#253944);background:linear-gradient(145deg,color-mix(in srgb,var(--slot-color) 11%,#101923),#071019);cursor:grab}
+.arsenal-panel .loadout-slot::before{display:none}
+.arsenal-panel .loadout-slot span{min-width:0}.arsenal-panel .loadout-slot strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;color:#e7dac0}.arsenal-panel .loadout-slot small{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:8px}
+.gear-icon{display:block;flex:0 0 auto;width:54px;height:54px;object-fit:cover;border:1px solid color-mix(in srgb,var(--slot-color,var(--rarity,#5b8aa8)) 65%,#263a46);background:#0b1420}
+.loot-icon img{width:94px;height:94px;object-fit:contain}
+.arsenal-panel .loadout-slot .gear-icon{width:52px;height:52px}
+.arsenal-panel .loadout-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;border:0}
+.arsenal-panel .loadout-stats div{display:block;padding:7px;background:#0b1b25;border:1px solid #273d4b}.arsenal-panel .loadout-stats b{display:block;margin-top:4px}
+.arsenal-vault .inventory-tabs{margin:0 0 8px}.arsenal-vault .vault-summary{flex-wrap:wrap}
+.arsenal-vault .inventory-grid{min-height:250px;max-height:310px;grid-template-columns:repeat(auto-fill,minmax(165px,1fr));overflow:auto}
+.arsenal-vault .inventory-item{min-height:70px;padding:6px;cursor:grab}.arsenal-vault .inventory-item .gear-icon{width:55px;height:55px;border-color:var(--rarity)}.arsenal-vault .inventory-item b{font-size:11px;line-height:1.15;margin:4px 0}
+.arsenal-vault .inventory-item.locked-item{opacity:.48;filter:grayscale(.7);cursor:default}.arsenal-vault .inventory-detail{min-height:170px;margin-top:9px;padding:13px}.arsenal-vault .inventory-detail .detail-rune{float:left;margin:0 14px 8px 0;width:76px;height:76px}.arsenal-vault .inventory-detail h3{font-size:19px}.arsenal-vault .inventory-detail p{margin:4px 0;font-size:11px}.arsenal-vault .inventory-detail .inventory-equip,.arsenal-vault .inventory-detail .soul-upgrade{width:auto;padding:8px;margin:5px}
+.enchant-workbench{display:grid;grid-template-columns:235px 1fr;gap:12px;margin:15px 0}.enchant-source{display:grid;align-content:start;gap:6px;max-height:480px;overflow:auto;padding:8px;border:1px solid #354b5c;background:#08131b}.enchant-source-item{display:flex;align-items:center;gap:8px;padding:5px;background:#10212e;color:#d6e4e8;border:1px solid #314a5a;text-align:left;cursor:grab}.enchant-source-item.selected{border-color:#74bcf2;box-shadow:0 0 13px #4c9bd355}.enchant-source-item .gear-icon{width:43px;height:43px}.enchant-layout{display:grid;grid-template-columns:240px 1fr;gap:10px;margin:0}.enchant-weapon{min-height:325px}.enchant-weapon>.gear-icon{z-index:1;width:112px;height:112px;filter:drop-shadow(0 0 20px var(--enchant))}.enchant-grid{grid-template-columns:1fr}.enchant-option{min-height:98px}
+@media(max-width:1100px){.arsenal-layout{grid-template-columns:1fr}.arsenal-panel .loadout-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.enchant-workbench{grid-template-columns:1fr}.enchant-source{display:flex;max-height:90px;overflow:auto}.enchant-source-item{min-width:150px}}
+@media(max-width:620px){#loadout-screen.arsenal-panel{padding:28px 15px}.arsenal-layout{display:block}.arsenal-vault{margin-top:10px}.arsenal-panel .loadout-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.arsenal-panel .loadout-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.enchant-layout{grid-template-columns:1fr}.enchant-weapon{min-height:240px}}

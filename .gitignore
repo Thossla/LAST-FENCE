@@ -1,0 +1,3 @@
+# Local visual QA captures and temporary browser profiles
+qa-*.png
+qa-*-profile/
